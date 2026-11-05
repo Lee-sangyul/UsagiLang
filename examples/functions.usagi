@@ -1,0 +1,10 @@
+# [예제 3] 함수와 재귀 호출
+ウララヤハ factorial(n) {
+    ハァ n <= 1 {
+        ウラララ 1
+    }
+    우라라라 n * factorial(n - 1)
+}
+
+푸루야 answer = factorial(5)
+우라 "5! = " + str(answer)
