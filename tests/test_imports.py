@@ -117,6 +117,14 @@ class ImportTests(unittest.TestCase):
             self.execute('import "my-lib.usagi"')
         self.assertEqual(self.execute('import "my-lib.usagi" as usable\nウラ usable.x'), "1\n")
 
+    def test_repository_example(self):
+        code_path = ROOT / "examples" / "imports.usagi"
+        code = code_path.read_text(encoding="utf-8")
+        output = io.StringIO()
+        Interpreter(stdout=output).run(code, source_path=code_path)
+        self.assertEqual(output.getvalue(),
+                         "4 squared = 16\\n2 + 3 = 5\\npi = 3.14159\\n")
+
     def test_import_tokens(self):
         kinds = [t.kind for t in tokenize('import 가져와 インポート as 별칭 として')]
         self.assertEqual(kinds, ['IMPORT', 'IMPORT', 'IMPORT', 'AS', 'AS', 'AS', 'EOF'])
