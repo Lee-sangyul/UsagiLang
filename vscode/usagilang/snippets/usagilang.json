@@ -1,0 +1,49 @@
+{
+  "Print": {
+    "prefix": "ura",
+    "body": [
+      "ウラ \"${1:Hello, World!}\""
+    ],
+    "description": "Print output"
+  },
+  "Variable": {
+    "prefix": "puruya",
+    "body": [
+      "プルャ ${1:name} = ${2:value}"
+    ]
+  },
+  "If": {
+    "prefix": "ha",
+    "body": [
+      "ハァ ${1:condition} {",
+      "\t$0",
+      "} フゥン {",
+      "\t",
+      "}"
+    ]
+  },
+  "Function": {
+    "prefix": "urafunc",
+    "body": [
+      "ウララヤハ ${1:name}(${2:args}) {",
+      "\t$0",
+      "}"
+    ]
+  },
+  "Class": {
+    "prefix": "usagiclass",
+    "body": [
+      "クラス ${1:Name} {",
+      "\tウララヤハ init(self) {",
+      "\t\t$0",
+      "\t}",
+      "}"
+    ]
+  },
+  "Import": {
+    "prefix": "usagiimport",
+    "body": [
+      "インポート \"${1:module.usagi}\" として ${2:module}"
+    ]
+  }
+}
