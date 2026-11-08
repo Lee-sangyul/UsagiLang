@@ -1,0 +1,10 @@
+# Reusable math helpers — reusable from another .usagi file.
+プルャ pi = 3.14159
+
+ウララヤハ square(n) {
+    ウラララ n * n
+}
+
+ウララヤハ add(a, b) {
+    ウラララ a + b
+}
