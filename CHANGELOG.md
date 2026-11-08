@@ -20,6 +20,6 @@ First experimental release.
 - Language reference, README, MIT license, and GitHub Actions test workflow.
 
 ### Known limitations
-- No class system, REPL or package manager yet. (Modules/imports are supported on the development branch.)
+- No modules/import, class system, REPL or package manager yet.
 - Not a security sandbox for untrusted code; memory/output/recursion bounds are incomplete.
 - Original fictional expressions are inspirations; their programming meanings are invented by this project.
