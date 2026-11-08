@@ -1,4 +1,4 @@
-# 🐰 UsagiLang v0.1.0-alpha
+# 🐰 UsagiLang v0.2.0-alpha (development)
 
 [🇯🇵 日本語版 README](README.ja.md) | English / 한국어
 
@@ -18,10 +18,11 @@ python usagilang.py -c '우라 "Hello, World!"'
 # Hello, World!
 ```
 
-**Features:** Japanese and Korean keyword aliases · variables · lists · module imports · if/else · while/for · functions · recursion · input/output · no third-party dependencies.
+**Features:** Japanese/Korean keywords · variables · mutable lists · classes · exceptions · import · REPL · math/text/random/clock · offline package manager · VS Code extension source · no third-party runtime dependencies.
 
-**Release:** `v0.1.0-alpha` · **License:** MIT (original code and documentation only) · **Python:** 3.10+
+**Latest tagged release:** `v0.1.0-alpha` · **Development:** `v0.2.0-alpha` · **License:** MIT (original code and documentation only) · **Python:** 3.10+
 
+- [v0.2 개발 기능 안내](docs/V02_FEATURES.md)
 - [Language commands](COMMANDS.md)
 - [Examples](examples)
 - [Changelog](CHANGELOG.md)
@@ -36,6 +37,17 @@ python usagilang.py -c '우라 "Hello, World!"'
 원작 대사의 뜻을 공식적으로 정의한 것이 아니라 **창작 프로그래밍 문법**입니다. 원작 권리자와 무관합니다.
 
 ## 바로 실행
+
+아래 명령은 프로젝트 루트에서 실행합니다. `v0.2.0-alpha`는 개발 브랜치 기능이므로 공식 배포 버전과 다를 수 있습니다.
+
+```bash
+python -m pip install -e .
+usagi run examples/v02.usagi
+usagi check examples/v02.usagi
+usagi repl
+```
+
+기존 `python usagilang.py examples/hello.usagi` 실행 방식도 유지됩니다.
 
 ```bash
 python usagilang.py examples/hello.usagi
@@ -120,7 +132,57 @@ python usagilang.py examples/imports.usagi
 - 경로는 **import를 작성한 파일을 기준**으로 해석하며, `-c` 모드에서는 현재 작업 폴더를 기준으로 합니다. 상대 경로의 `.usagi` 파일만 지원합니다.
 - 함수나 변수는 `모듈.함수()`, `모듈.변수`로 접근합니다. 일반 변수의 `.` 접근 및 모듈 멤버 직접 대입은 아직 지원하지 않습니다.
 - 순환 import는 오류로 처리합니다. 모듈 실행도 동일한 `--max-steps` 한도를 공유합니다.
-- import는 Python 패키지를 가져오지 않으며, 범용 파일 I/O나 패키지 관리 기능을 제공하지 않습니다.
+- import는 Python 모듈을 가져오지 않습니다. 로컬 패키지 참조 문법 `import "pkg:이름"`은 지원하지만 일반 파일 I/O는 제공하지 않습니다.
+
+## v0.2 업데이트 🐰
+
+**REPL:** `usagi repl` (여러 줄 입력 지원, `:help` / `:reset` / `:exit`).
+
+**리스트 수정:** `items[0] = 42`, `items.append(3)`, `items.pop()`, `items.insert(0, 1)`.
+
+**표준 라이브러리:** `math.sqrt(16)`, `math.pi`, `text.upper("hi")`, `random.randint(1, 6)`, `clock.now()`.
+
+**클래스·객체:**
+
+```usagi
+クラス Counter {
+    ウララヤハ init(self, value) { self.value = value }
+    ウララヤハ next(self) {
+        self.value = self.value + 1
+        ウラララ self.value
+    }
+}
+プルャ counter = Counter(4)
+ウラ counter.next()
+```
+
+**예외 처리:**
+
+```usagi
+시도 {
+    던지기 "야하!"
+} 잡기 err {
+    우라 err
+}
+```
+
+**로컬 패키지 관리:** 원격 저장소에서 자동 설치하지 않고 개발자가 선택한 로컬 `.usagi` 파일만 복사합니다.
+
+```bash
+usagi pkg init
+usagi pkg add helpers examples/modules/math.usagi
+usagi pkg list
+usagi pkg verify
+usagi pkg remove helpers
+```
+
+코드에서는 `import "pkg:helpers" as helpers`로 가져옵니다. 패키지 관리자는 **실험적 로컬 단일 파일 방식**이며 외부 레지스트리·버전 해결·온라인 설치는 지원하지 않습니다.
+
+**VS Code:** [소스 확장](vscode/usagilang) 제공. 구문 강조, 스니펫, 키워드 추천, Run/Check 명령. 아직 Marketplace에는 게시되지 않았습니다.
+
+**오류 표시:** `ヤダ！` 테마, 오류 코드, 코드 줄 위치, 일부 해결 힌트. `--plain-errors`로 테마를 끌 수 있습니다.
+
+자세한 문법과 제한은 [v0.2 안내](docs/V02_FEATURES.md)를 참조하세요.
 
 ## 테스트
 
@@ -132,5 +194,5 @@ python -m unittest discover -s tests -v
 
 - Python 코드를 `eval`/`exec`로 실행하지 않는 독립 파서 및 트리 탐색형 인터프리터.
 - 반복 실행 횟수는 기본 100,000회 제한 (`--max-steps 5000`).
-- 실제 프로젝트 언어 v0.1이며 일반 파일 I/O, 객체, 대입형 리스트 수정, 패키지 관리 등은 미구현.
+- v0.2 개발판은 객체·리스트 대입·로컬 단일 파일 패키지 기능을 지원하지만 일반 파일 I/O, 온라인 패키지 레지스트리, 상속, 정적 타입 검사, LSP, 임의 Python 모듈 가져오기는 지원하지 않습니다.
 - 믿을 수 없는 코드를 시스템 수준으로 격리하는 보안 샌드박스는 아님. 재귀·메모리·출력 크기 제한은 완전하지 않음.
