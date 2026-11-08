@@ -1,4 +1,4 @@
-# 🐰 UsagiLang v0.1.0-alpha
+# 🐰 UsagiLang v0.2.0-alpha（開発版）
 
 [English / 한국어](README.md) | **日本語**
 
@@ -22,11 +22,12 @@ python usagilang.py -c 'ウラ "Hello, World!"'
 # Hello, World!
 ```
 
-**主な機能：** 日本語・韓国語のキーワード別名、変数、リスト、条件分岐（if/else）、反復処理（while/for）、関数、再帰、モジュール読み込み、入出力。
+**主な機能：** 日本語・韓国語のキーワード別名、変数、リスト、条件分岐（if/else）、反復処理（while/for）、関数、再帰、モジュール読み込み、クラス、例外処理、REPL、標準ライブラリ、ローカルパッケージ管理、入出力。
 
 | 項目 | 内容 |
 |---|---|
-| リリース | `v0.1.0-alpha` |
+| 最新リリース | `v0.1.0-alpha` |
+| 開発中 | `v0.2.0-alpha` |
 | 動作環境 | Python 3.10 以上 |
 | 外部依存 | なし |
 | ライセンス | MIT（独自に作成したコード・ドキュメントのみ） |
@@ -60,6 +61,18 @@ python usagilang.py -c 'ウラ "ヤハ！"'
 
 Windows では環境によって `python` の代わりに `py` を使用してください。コマンドの引用符の扱いはシェルにより異なる場合があります。
 
+## 🐰 v0.2 の始め方
+
+```bash
+python -m pip install -e .
+usagi run examples/v02.usagi
+usagi check examples/v02.usagi
+usagi repl
+```
+
+REPL は複数行入力に対応し、`:help` / `:reset` / `:exit` が使えます。
+古い起動方法 `python usagilang.py examples/hello.usagi` もそのまま利用できます。
+
 ## 📖 コマンド一覧
 
 日本語と韓国語の表記は同じ機能を持ち、1つのファイル内で混在させられます。
@@ -86,6 +99,10 @@ Windows では環境によって `python` の代わりに `py` を使用して�
 | 値なし | `ナシ`, `null` | `없음` |
 | モジュールの読み込み | `import`, `インポート` | `가져와` |
 | 別名指定 | `as`, `として` | `별칭` |
+| クラス宣言 | `class`, `クラス` | `클래스` |
+| try | `try`, `ためす` | `시도` |
+| catch | `catch`, `つかまえる` | `잡기` |
+| throw | `throw`, `なげる` | `던지기` |
 
 ※ キーワードの役割は原作中の発言の公式な意味を表すものではありません。詳細な仕様は [COMMANDS.md](COMMANDS.md)（韓国語）を参照してください。
 
@@ -187,7 +204,55 @@ python usagilang.py examples/imports.usagi
 - パスは読み込み元の `.usagi` ファイルからの相対パスです。 `-c` の場合はカレントディレクトリから探します。絶対パスや `.usagi` 以外のファイルは対象外です。
 - `module.function()` や `module.variable` の形でアクセスします。モジュールの変数と呼び出し元の変数は分離されます。
 - 同じファイルは1回の実行中に1回だけ評価され、循環 import はエラーになります。`--max-steps` は読み込み先にも適用されます。
-- Python モジュールの読み込み、汎用ファイル入出力、パッケージ管理、モジュールのメンバーへの直接代入は未対応です。
+- Python モジュールの読み込み、汎用ファイル入出力、Python パッケージの読み込み、一般的なファイル I/O、モジュールのメンバーへの直接代入は未対応です。
+
+## 📦 v0.2 の追加機能
+
+**リストの変更**：`items[0] = 10`、`items.append(3)`、`items.pop()`、`items.insert(0, 7)`。
+
+**標準ライブラリ**：`math.sqrt(16)`、`math.pi`、`text.upper("hi")`、`random.randint(1, 6)`、`clock.now()`。
+
+**クラス・オブジェクト**：
+
+```usagi
+クラス Counter {
+    ウララヤハ init(self, value) { self.value = value }
+    ウララヤハ next(self) {
+        self.value = self.value + 1
+        ウラララ self.value
+    }
+}
+プルャ c = Counter(4)
+ウラ c.next()
+```
+
+**例外処理**：
+
+```usagi
+ためす {
+    なげる "ヤハ！"
+} つかまえる error {
+    ウラ error
+}
+```
+
+**ローカルパッケージ管理**：ネットワークからコードを自動取得せず、選択した `.usagi` ファイルのみプロジェクト内へコピーします。
+
+```bash
+usagi pkg init
+usagi pkg add helpers examples/modules/math.usagi
+usagi pkg list
+usagi pkg verify
+usagi pkg remove helpers
+```
+
+`import "pkg:helpers" as helpers` で読み込めます。オンラインレジストリや依存関係の自動解決はありません。
+
+**VS Code：** [ソースコードのみの拡張機能](vscode/usagilang)。構文強調、スニペット、キーワード補完、実行／構文チェックを提供します。Marketplace 未公開です。
+
+**エラー表示：** `ヤダ！` テーマ、エラーコード、発生行、場合によっては対処のヒントを表示します。`--plain-errors` でテーマを無効化できます。
+
+より詳しい説明：[v0.2 機能ガイド（日本語）](docs/V02_FEATURES.ja.md)。
 
 ## 🧪 テスト
 
@@ -199,9 +264,9 @@ python -m unittest discover -s tests -v
 
 - Python の `eval` / `exec` でユーザーのコードを実行する方式ではなく、独自のパーサーと構文木をたどるインタープリターを使用します。
 - 実行ステップ数はデフォルトで 100,000 に制限されます。例：`--max-steps 5000`
-- 汎用ファイル入出力、クラス・オブジェクト、リスト要素への代入（`items[0] = value`）、パッケージ管理などは未実装です。
+- 汎用ファイル入出力、オンラインパッケージレジストリ、クラス継承、静的型検査、LSP などは未実装です。
 - **信頼できないコードを OS レベルで隔離するセキュリティサンドボックスではありません。** 再帰の深さ、メモリ使用量、出力サイズの制限は完全ではありません。
-- `v0.1.0-alpha` は実験的なバージョンのため、仕様や動作は今後変更される可能性があります。
+- `v0.2.0-alpha` は開発中の実験的なバージョンのため、仕様や動作は今後変更される可能性があります。
 
 ## 🤝 関連ドキュメント・貢献
 
