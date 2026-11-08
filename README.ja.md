@@ -22,7 +22,7 @@ python usagilang.py -c 'ウラ "Hello, World!"'
 # Hello, World!
 ```
 
-**主な機能：** 日本語・韓国語のキーワード別名、変数、リスト、条件分岐（if/else）、反復処理（while/for）、関数、再帰、入出力。
+**主な機能：** 日本語・韓国語のキーワード別名、変数、リスト、条件分岐（if/else）、反復処理（while/for）、関数、再帰、モジュール読み込み、入出力。
 
 | 項目 | 内容 |
 |---|---|
@@ -167,7 +167,7 @@ Windows では環境によって `python` の代わりに `py` を使用して�
 - `range(n)`、`range(start, stop[, step])`
 - `input(prompt)`
 
-## 📦 モジュールの import（開発ブランチの機能）
+## 📦 モジュールの import
 
 別の `.usagi` ファイルにある変数や関数を、名前空間を通して使えます。
 
