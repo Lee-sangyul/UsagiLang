@@ -1,0 +1,5 @@
+# The import path is relative to this file.
+インポート "modules/math.usagi" として 数学
+ウラ "4 squared =", 数学.square(4)
+우라 "2 + 3 =", 数学.add(2, 3)
+ウラ "pi =", 数学.pi
