@@ -33,6 +33,7 @@ KEYWORDS = {
     "サクッ": "BREAK", "사쿠": "BREAK",
     "プワッ": "CONTINUE", "푸왓": "CONTINUE",
     "ウララヤハ": "FUNC", "우라라야하": "FUNC",
+    "func": "FUNC", "return": "RETURN",
     "in": "IN", "안에": "IN",
     "and": "AND", "그리고": "AND",
     "or": "OR", "또는": "OR",
