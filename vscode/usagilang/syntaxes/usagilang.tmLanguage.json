@@ -1,0 +1,104 @@
+{
+  "name": "UsagiLang",
+  "scopeName": "source.usagilang",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#operators"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.usagilang",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.line.double-slash.usagilang",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.usagilang",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.usagilang",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.usagilang",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.usagilang",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.usagilang",
+          "match": "\\b[0-9]+(?:\\.[0-9]+)?\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.usagilang",
+          "match": "\\b(?:import|as|class|try|catch|throw|func|return|in|and|or|not|null)\\b|(?:プルャ|ウララヤハ|ウラララ|ハァ|フゥン|プルルルル|ツツウラウラ|サクッ|プワッ|インポート|として|クラス|ためす|つかまえる|なげる|푸루야|우라라야하|우라라라|하아|후웅|푸루루루루|푸루루루|츠츠우라우라|사쿠|푸왓|가져와|별칭|클래스|시도|잡기|던지기)"
+        },
+        {
+          "name": "support.function.builtin.usagilang",
+          "match": "\\b(?:len|int|float|str|range|append|pop|abs|round|sum|min|max|input)\\b"
+        },
+        {
+          "name": "constant.language.usagilang",
+          "match": "(?:ヤハ|ウーラーヤハヤハ|ナシ|없음|야하|우나야하야하|우라야하야하|null)"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.usagilang",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.usagilang",
+          "match": "==|!=|<=|>=|&&|\\|\\||[+*/%<>=!-]"
+        }
+      ]
+    }
+  }
+}

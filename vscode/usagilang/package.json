@@ -1,0 +1,85 @@
+{
+  "name": "usagilang-vscode",
+  "displayName": "UsagiLang",
+  "description": "Syntax highlighting, snippets and run/check commands for .usagi files.",
+  "version": "0.2.0",
+  "publisher": "usagilang",
+  "private": true,
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:usagilang",
+    "onCommand:usagilang.runFile",
+    "onCommand:usagilang.checkFile"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "usagilang",
+        "aliases": [
+          "UsagiLang",
+          "usagi"
+        ],
+        "extensions": [
+          ".usagi"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "usagilang",
+        "scopeName": "source.usagilang",
+        "path": "./syntaxes/usagilang.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "usagilang",
+        "path": "./snippets/usagilang.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "usagilang.runFile",
+        "title": "UsagiLang: Run Current File",
+        "category": "UsagiLang"
+      },
+      {
+        "command": "usagilang.checkFile",
+        "title": "UsagiLang: Check Current File",
+        "category": "UsagiLang"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "usagilang.runFile",
+          "when": "resourceExtname == .usagi",
+          "group": "navigation"
+        },
+        {
+          "command": "usagilang.checkFile",
+          "when": "resourceExtname == .usagi",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "UsagiLang",
+      "properties": {
+        "usagilang.cliPath": {
+          "type": "string",
+          "default": "usagi",
+          "description": "Path to the installed UsagiLang CLI executable"
+        }
+      }
+    }
+  },
+  "license": "MIT"
+}

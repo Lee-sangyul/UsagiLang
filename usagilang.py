@@ -8,6 +8,10 @@
 from __future__ import annotations
 
 import argparse
+import json
+import math as pymath
+import random as pyrandom
+import time
 from dataclasses import dataclass
 from pathlib import Path
 import sys
@@ -29,6 +33,7 @@ KEYWORDS = {
     "サクッ": "BREAK", "사쿠": "BREAK",
     "プワッ": "CONTINUE", "푸왓": "CONTINUE",
     "ウララヤハ": "FUNC", "우라라야하": "FUNC",
+    "func": "FUNC", "return": "RETURN",
     "in": "IN", "안에": "IN",
     "and": "AND", "그리고": "AND",
     "or": "OR", "또는": "OR",
@@ -36,6 +41,10 @@ KEYWORDS = {
     "ナシ": "NONE", "없음": "NONE", "null": "NONE",
     "import": "IMPORT", "가져와": "IMPORT", "インポート": "IMPORT",
     "as": "AS", "별칭": "AS", "として": "AS",
+    "class": "CLASS", "클래스": "CLASS", "クラス": "CLASS",
+    "try": "TRY", "시도": "TRY", "ためす": "TRY",
+    "catch": "CATCH", "잡기": "CATCH", "つかまえる": "CATCH",
+    "throw": "THROW", "던지기": "THROW", "なげる": "THROW",
 }
 
 OPERATORS = {
@@ -49,10 +58,12 @@ OPERATORS = {
 
 
 class UsagiError(Exception):
-    def __init__(self, message: str, line: int = 0, column: int = 0):
+    def __init__(self, message: str, line: int = 0, column: int = 0,
+                 code: str = "E100"):
         super().__init__(message)
         self.line = line
         self.column = column
+        self.code = code
 
 
 @dataclass(frozen=True)
@@ -200,7 +211,7 @@ class Parser:
 
     def require_separator(self, stmt: Node) -> None:
         # 블록문은 중괄호가 구문을 나누므로 별도 줄바꿈이 필수가 아니다.
-        if stmt.kind in ("if", "while", "for", "func"):
+        if stmt.kind in ("if", "while", "for", "func", "class", "try"):
             return
         if (self.cur.kind not in ("SEP", "EOF", "RBRACE")
                 and self.tokens[self.pos - 1].kind != "SEP"):
@@ -225,6 +236,23 @@ class Parser:
             filename = self.take("STRING").value
             alias = self.take("NAME").text if self.accept("AS") else None
             return Node("import", (filename, alias), t.line)
+        if self.accept("CLASS"):
+            name = self.take("NAME").text
+            methods = self.block()
+            if any(method.kind != "func" for method in methods):
+                raise UsagiError("클래스 안에는 함수 선언만 넣을 수 있어요.", t.line)
+            if len({method.args[0] for method in methods}) != len(methods):
+                raise UsagiError("클래스 메서드가 중복됐어요.", t.line)
+            return Node("class", (name, methods), t.line)
+        if self.accept("TRY"):
+            body = self.block()
+            self.skip_seps()
+            self.take("CATCH")
+            name = self.take("NAME").text
+            handler = self.block()
+            return Node("try", (body, name, handler), t.line)
+        if self.accept("THROW"):
+            return Node("throw", (self.expr(),), t.line)
         if self.accept("LET"):
             name = self.take("NAME").text
             self.take("ASSIGN")
@@ -269,11 +297,12 @@ class Parser:
             return Node("break", (), t.line)
         if self.accept("CONTINUE"):
             return Node("continue", (), t.line)
-        if t.kind == "NAME" and self.peek().kind == "ASSIGN":
-            self.take("NAME")
-            self.take("ASSIGN")
-            return Node("assign", (t.text, self.expr()), t.line)
-        return Node("expr_stmt", (self.expr(),), t.line)
+        target = self.expr()
+        if self.accept("ASSIGN"):
+            if target.kind not in ("name", "index", "member"):
+                raise UsagiError("대입 대상이 유효하지 않아요.", t.line, t.column)
+            return Node("set", (target, self.expr()), t.line)
+        return Node("expr_stmt", (target,), t.line)
 
     def expr(self) -> Node:
         return self.or_expr()
@@ -424,6 +453,30 @@ class ModuleNamespace:
     environment: Environment
 
 
+@dataclass
+class StandardNamespace:
+    name: str
+    members: dict[str, Any]
+
+
+@dataclass
+class ClassValue:
+    name: str
+    methods: dict[str, UserFunction]
+
+
+@dataclass
+class InstanceValue:
+    cls: ClassValue
+    fields: dict[str, Any]
+
+
+@dataclass
+class BoundMethod:
+    function: UserFunction
+    receiver: InstanceValue
+
+
 class ReturnFlow(Exception):
     def __init__(self, value: Any):
         self.value = value
@@ -454,6 +507,33 @@ class Interpreter:
         self.builtins.define("float", Builtin("float", float, 1, 1))
         self.builtins.define("str", Builtin("str", self.stringify, 1, 1))
         self.builtins.define("range", Builtin("range", range, 1, 3))
+        self.builtins.define("abs", Builtin("abs", abs, 1, 1))
+        self.builtins.define("round", Builtin("round", round, 1, 2))
+        self.builtins.define("sum", Builtin("sum", sum, 1, 1))
+        self.builtins.define("min", Builtin("min", min, 1, None))
+        self.builtins.define("max", Builtin("max", max, 1, None))
+        self.builtins.define("append", Builtin("append", self.list_append, 2, 2))
+        self.builtins.define("pop", Builtin("pop", self.list_pop, 1, 2))
+        self.builtins.define("math", StandardNamespace("math", {
+            "sqrt": Builtin("math.sqrt", pymath.sqrt, 1, 1),
+            "floor": Builtin("math.floor", pymath.floor, 1, 1),
+            "ceil": Builtin("math.ceil", pymath.ceil, 1, 1),
+            "pow": Builtin("math.pow", pymath.pow, 2, 2),
+            "pi": pymath.pi,
+        }))
+        self.builtins.define("text", StandardNamespace("text", {
+            "upper": Builtin("text.upper", self.text_upper, 1, 1),
+            "lower": Builtin("text.lower", self.text_lower, 1, 1),
+            "split": Builtin("text.split", self.text_split, 1, 2),
+            "join": Builtin("text.join", self.text_join, 2, 2),
+        }))
+        self.builtins.define("random", StandardNamespace("random", {
+            "randint": Builtin("random.randint", pyrandom.randint, 2, 2),
+            "choice": Builtin("random.choice", pyrandom.choice, 1, 1),
+        }))
+        self.builtins.define("clock", StandardNamespace("clock", {
+            "now": Builtin("clock.now", time.time, 0, 0),
+        }))
 
     @staticmethod
     def stringify(value: Any) -> str:
@@ -465,7 +545,37 @@ class Interpreter:
             return "ナシ"
         if isinstance(value, list):
             return "[" + ", ".join(Interpreter.stringify(v) for v in value) + "]"
+        if isinstance(value, InstanceValue):
+            return f"<{value.cls.name} instance>"
         return str(value)
+
+    @staticmethod
+    def list_append(items: Any, value: Any) -> None:
+        if not isinstance(items, list):
+            raise UsagiError("append() 첫 번째 인자는 리스트여야 해요.")
+        items.append(value)
+
+    @staticmethod
+    def list_pop(items: Any, index: int = -1) -> Any:
+        if not isinstance(items, list):
+            raise UsagiError("pop() 첫 번째 인자는 리스트여야 해요.")
+        return items.pop(index)
+
+    @staticmethod
+    def text_upper(value: str) -> str:
+        return value.upper()
+
+    @staticmethod
+    def text_lower(value: str) -> str:
+        return value.lower()
+
+    @staticmethod
+    def text_split(value: str, separator: str | None = None) -> list[str]:
+        return value.split(separator)
+
+    @staticmethod
+    def text_join(separator: str, values: list[str]) -> str:
+        return separator.join(values)
 
     def read_input(self, prompt: Any = "") -> str:
         self.stdout.write(self.stringify(prompt))
@@ -493,11 +603,18 @@ class Interpreter:
             raise UsagiError("반복문 밖에서는 プワッ/푸왓을 사용할 수 없어요.") from None
 
     def import_module(self, filename: str, env: Environment, line: int) -> ModuleNamespace:
-        relative = Path(filename)
-        if not filename or relative.is_absolute() or relative.suffix != ".usagi":
-            raise UsagiError('import 경로는 상대 경로의 .usagi 파일이어야 해요.', line)
-        base = env.source_path.parent if env.source_path is not None else Path.cwd()
-        path = (base / relative).resolve()
+        if filename.startswith("pkg:"):
+            from usagi_packages import PackageError, resolve
+            try:
+                path = resolve(filename[4:], env.source_path)
+            except PackageError as ex:
+                raise UsagiError(f"패키지 가져오기 실패: {ex}", line) from None
+        else:
+            relative = Path(filename)
+            if not filename or relative.is_absolute() or relative.suffix != ".usagi":
+                raise UsagiError('import 경로는 상대 경로의 .usagi 파일이어야 해요.', line)
+            base = env.source_path.parent if env.source_path is not None else Path.cwd()
+            path = (base / relative).resolve()
         if path in self.loading_modules:
             raise UsagiError(f"순환 import가 발생했어요: {path}", line)
         if path in self.module_cache:
@@ -529,6 +646,87 @@ class Interpreter:
         self.module_cache[path] = module
         return module
 
+    def call_value(self, fn: Any, args: list[Any], line: int) -> Any:
+        if isinstance(fn, BoundMethod):
+            return self.call_value(fn.function, [fn.receiver, *args], line)
+        if isinstance(fn, ClassValue):
+            instance = InstanceValue(fn, {})
+            if "init" in fn.methods:
+                self.call_value(BoundMethod(fn.methods["init"], instance), args, line)
+            elif args:
+                raise UsagiError(f"{fn.name}()은 생성자 인자를 받지 않아요.", line)
+            return instance
+        if isinstance(fn, Builtin):
+            if len(args) < fn.minimum or (fn.maximum is not None and len(args) > fn.maximum):
+                raise UsagiError(f"{fn.name}() 인자 수가 잘못됐어요: {len(args)}개", line)
+            try:
+                return fn.fn(*args)
+            except UsagiError:
+                raise
+            except (TypeError, ValueError, OverflowError, IndexError, KeyError) as ex:
+                raise UsagiError(f"{fn.name}() 호출 오류: {ex}", line) from None
+        if isinstance(fn, UserFunction):
+            if len(args) != len(fn.params):
+                raise UsagiError(f"{fn.name}()는 인자 {len(fn.params)}개가 필요해요.", line)
+            local = Environment(fn.closure)
+            for name, value in zip(fn.params, args):
+                local.define(name, value)
+            try:
+                self.exec_block(fn.body, local)
+            except ReturnFlow as ret:
+                return ret.value
+            except (BreakFlow, ContinueFlow):
+                raise UsagiError("함수의 반복문 밖에서 break/continue를 사용할 수 없어요.", line) from None
+            return None
+        raise UsagiError("호출할 수 있는 함수 또는 클래스가 아니에요.", line)
+
+    def read_member(self, target: Any, name: str, line: int) -> Any:
+        if isinstance(target, ModuleNamespace):
+            if name not in target.environment.values:
+                raise UsagiError(f"모듈 {target.path.name}에 정의되지 않은 이름: {name}", line)
+            return target.environment.values[name]
+        if isinstance(target, StandardNamespace):
+            if name not in target.members:
+                raise UsagiError(f"{target.name}에 없는 기능: {name}", line)
+            return target.members[name]
+        if isinstance(target, InstanceValue):
+            if name in target.fields:
+                return target.fields[name]
+            if name in target.cls.methods:
+                return BoundMethod(target.cls.methods[name], target)
+            raise UsagiError(f"{target.cls.name}에 없는 속성: {name}", line)
+        if isinstance(target, list):
+            methods = {
+                "append": Builtin("list.append", lambda value: self.list_append(target, value), 1, 1),
+                "pop": Builtin("list.pop", lambda index=-1: self.list_pop(target, index), 0, 1),
+                "insert": Builtin("list.insert", lambda index, value: target.insert(index, value), 2, 2),
+            }
+            if name in methods:
+                return methods[name]
+        raise UsagiError("해당 값에서는 점(.) 속성에 접근할 수 없어요.", line)
+
+    def assign_target(self, target: Node, value: Any, env: Environment) -> None:
+        if target.kind == "name":
+            env.assign(target.args[0], value, target.line)
+            return
+        if target.kind == "index":
+            obj = self.evaluate(target.args[0], env)
+            index = self.evaluate(target.args[1], env)
+            if not isinstance(obj, list):
+                raise UsagiError("리스트 요소에만 대입할 수 있어요.", target.line)
+            try:
+                obj[index] = value
+            except (TypeError, IndexError) as ex:
+                raise UsagiError(f"리스트 대입 오류: {ex}", target.line) from None
+            return
+        if target.kind == "member":
+            obj = self.evaluate(target.args[0], env)
+            if not isinstance(obj, InstanceValue):
+                raise UsagiError("인스턴스 필드에만 직접 대입할 수 있어요.", target.line)
+            obj.fields[target.args[1]] = value
+            return
+        raise UsagiError("잘못된 대입 대상이에요.", target.line)
+
     def exec_block(self, stmts: list[Node], env: Environment) -> None:
         for stmt in stmts:
             self.tick(stmt.line)
@@ -537,7 +735,9 @@ class Interpreter:
     def execute(self, n: Node, env: Environment) -> None:
         k, a = n.kind, n.args
         if k == "import":
-            alias = a[1] if a[1] is not None else Path(a[0]).stem
+            alias = a[1] if a[1] is not None else (
+                a[0][4:] if a[0].startswith("pkg:") else Path(a[0]).stem
+            )
             if not alias.isidentifier() or alias in KEYWORDS:
                 raise UsagiError("모듈 이름이 유효하지 않아요. as/별칭/として로 이름을 지정하세요.", n.line)
             env.define(alias, self.import_module(a[0], env, n.line))
@@ -545,6 +745,22 @@ class Interpreter:
             env.define(a[0], self.evaluate(a[1], env))
         elif k == "assign":
             env.assign(a[0], self.evaluate(a[1], env), n.line)
+        elif k == "set":
+            value = self.evaluate(a[1], env)
+            self.assign_target(a[0], value, env)
+        elif k == "class":
+            methods = {method.args[0]: UserFunction(method.args[0], method.args[1],
+                                                    method.args[2], env) for method in a[1]}
+            env.define(a[0], ClassValue(a[0], methods))
+        elif k == "throw":
+            raise UsagiError(self.stringify(self.evaluate(a[0], env)), n.line, code="E300")
+        elif k == "try":
+            try:
+                self.exec_block(a[0], env)
+            except UsagiError as ex:
+                handler = Environment(env)
+                handler.define(a[1], str(ex))
+                self.exec_block(a[2], handler)
         elif k == "print":
             print(*(self.stringify(self.evaluate(e, env)) for e in a[0]), file=self.stdout)
         elif k == "expr_stmt":
@@ -594,12 +810,7 @@ class Interpreter:
         if k == "name":
             return env.get(a[0], n.line)
         if k == "member":
-            module = self.evaluate(a[0], env)
-            if not isinstance(module, ModuleNamespace):
-                raise UsagiError("점(.) 접근은 import한 모듈에서만 사용할 수 있어요.", n.line)
-            if a[1] not in module.environment.values:
-                raise UsagiError(f"모듈 {module.path.name}에 정의되지 않은 이름: {a[1]}", n.line)
-            return module.environment.values[a[1]]
+            return self.read_member(self.evaluate(a[0], env), a[1], n.line)
         if k == "list":
             return [self.evaluate(e, env) for e in a[0]]
         if k == "unary":
@@ -638,54 +849,130 @@ class Interpreter:
         if k == "call":
             fn = self.evaluate(a[0], env)
             args = [self.evaluate(x, env) for x in a[1]]
-            if isinstance(fn, Builtin):
-                if len(args) < fn.minimum or (fn.maximum is not None and len(args) > fn.maximum):
-                    raise UsagiError(f"{fn.name}() 인자 수가 잘못됐어요: {len(args)}개", n.line)
-                try:
-                    return fn.fn(*args)
-                except UsagiError:
-                    raise
-                except (TypeError, ValueError, OverflowError) as ex:
-                    raise UsagiError(f"{fn.name}() 호출 오류: {ex}", n.line) from None
-            if isinstance(fn, UserFunction):
-                if len(args) != len(fn.params):
-                    raise UsagiError(f"{fn.name}()는 인자 {len(fn.params)}개가 필요해요.", n.line)
-                local = Environment(fn.closure)
-                for name, value in zip(fn.params, args):
-                    local.define(name, value)
-                try:
-                    self.exec_block(fn.body, local)
-                except ReturnFlow as ret:
-                    return ret.value
-                except (BreakFlow, ContinueFlow):
-                    raise UsagiError("함수 안의 반복문 밖에서 사쿠/푸왓을 사용할 수 없어요.", n.line) from None
-                return None
-            raise UsagiError("호출할 수 있는 함수가 아니에요.", n.line)
+            return self.call_value(fn, args, n.line)
         raise UsagiError(f"알 수 없는 식: {k}", n.line)
 
 
+def diagnostic(error: UsagiError, source: str, label: str = "<code>",
+               themed: bool = True) -> str:
+    """User-friendly source diagnostics with stable error codes and line markers."""
+    location = f"{label}:{error.line}" if error.line else label
+    if error.column:
+        location += f":{error.column}"
+    message = f"{'🐰 ヤダ！ ' if themed else ''}[{error.code}] {location}: {error}"
+    if error.line:
+        lines = source.splitlines()
+        if 1 <= error.line <= len(lines):
+            excerpt = lines[error.line - 1]
+            message += "\n  " + excerpt
+            if error.column:
+                message += "\n  " + (" " * (error.column - 1)) + "^"
+    if "정의되지 않은 이름" in str(error):
+        message += "\n💡 プルャ/푸루야로 변수를 먼저 선언하세요."
+    return message
+
+
+def incomplete_input(source: str) -> bool:
+    """Detect unfinished blocks or parentheses to support multiline REPL."""
+    try:
+        tokens = tokenize(source)
+    except UsagiError as exc:
+        return "문자열이 닫히지 않았어요" in str(exc)
+    depths = {"LBRACE": 0, "LPAREN": 0, "LBRACKET": 0}
+    closes = {"RBRACE": "LBRACE", "RPAREN": "LPAREN", "RBRACKET": "LBRACKET"}
+    for token in tokens:
+        if token.kind in depths:
+            depths[token.kind] += 1
+        elif token.kind in closes:
+            depths[closes[token.kind]] -= 1
+    return any(n > 0 for n in depths.values())
+
+
+def repl_loop(stdin: TextIO | None = None, stdout: TextIO | None = None,
+              stderr: TextIO | None = None, max_steps: int = 100_000,
+              themed: bool = True) -> int:
+    reader = stdin if stdin is not None else sys.stdin
+    writer = stdout if stdout is not None else sys.stdout
+    errors = stderr if stderr is not None else sys.stderr
+    runner = Interpreter(stdin=reader, stdout=writer, max_steps=max_steps)
+    print("🐰 UsagiLang REPL v0.2 (:help, :reset, :exit)", file=writer)
+    pending: list[str] = []
+    while True:
+        writer.write("... " if pending else ">>> ")
+        writer.flush()
+        line = reader.readline()
+        if line == "":
+            writer.write("\n")
+            break
+        stripped = line.strip()
+        if not pending and stripped in (":quit", ":exit", ":q"):
+            break
+        if not pending and stripped == ":help":
+            print(":help :reset :exit | Enter UsagiLang code", file=writer)
+            continue
+        if not pending and stripped == ":reset":
+            runner = Interpreter(stdin=reader, stdout=writer, max_steps=max_steps)
+            print("フゥン… 환경 초기화 완료", file=writer)
+            continue
+        if not pending and not stripped:
+            continue
+        pending.append(line)
+        source = "".join(pending)
+        if incomplete_input(source):
+            continue
+        try:
+            runner.run(source)
+        except UsagiError as ex:
+            print(diagnostic(ex, source, "<repl>", themed), file=errors)
+        except RecursionError:
+            print("🐰 ヤダ！ [E900] 재귀 호출이 너무 깊어요.", file=errors)
+        pending = []
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
-    cli = argparse.ArgumentParser(description="UsagiLang v0.1 인터프리터 🐰")
-    cli.add_argument("file", nargs="?", help="실행할 .usagi 파일")
-    cli.add_argument("-c", "--code", help="문자열로 입력한 UsagiLang 코드 실행")
-    cli.add_argument("--max-steps", type=int, default=100_000, help="실행 명령 상한(기본 100000)")
-    args = cli.parse_args(argv)
-    if bool(args.file) == (args.code is not None):
-        cli.error("파일 경로나 -c 코드 중 하나를 지정하세요.")
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == "pkg":
+        from usagi_packages import PackageError, command
+        try:
+            return command(arguments[1:], sys.stdout)
+        except (PackageError, OSError, UnicodeError) as ex:
+            print(f"🐰 ヤダ！ [E500] {ex}", file=sys.stderr)
+            return 1
+
+    command_name = arguments.pop(0) if arguments and arguments[0] in ("run", "check", "repl") else "run"
+    cli = argparse.ArgumentParser(
+        description="UsagiLang v0.2 🐰 (run / check / repl / pkg)"
+    )
+    if command_name != "repl":
+        cli.add_argument("file", nargs="?", help="실행하거나 검사할 .usagi 파일")
+        cli.add_argument("-c", "--code", help="직접 입력하는 UsagiLang 코드")
+    cli.add_argument("--max-steps", type=int, default=100_000, help="실행 명령 상한")
+    cli.add_argument("--plain-errors", action="store_true", help="우사기 테마 없이 오류 표시")
+    args = cli.parse_args(arguments)
     if args.max_steps < 1:
         cli.error("--max-steps는 1 이상이어야 해요.")
+    if command_name == "repl":
+        return repl_loop(max_steps=args.max_steps, themed=not args.plain_errors)
+    if bool(args.file) == (args.code is not None):
+        cli.error("파일 경로나 -c 코드 중 하나를 지정하세요.")
+
     label = args.file or "<code>"
+    source = ""
     try:
-        src = Path(args.file).read_text(encoding="utf-8-sig") if args.file else args.code
-        Interpreter(max_steps=args.max_steps).run(src, source_path=args.file)
+        source = Path(args.file).read_text(encoding="utf-8-sig") if args.file else args.code
+        if command_name == "check":
+            Parser(tokenize(source)).parse()
+            print(f"🐰 문법 검사 통과: {label}")
+            return 0
+        Interpreter(max_steps=args.max_steps).run(source, source_path=args.file)
         return 0
     except (OSError, UnicodeError) as ex:
-        print(f"파일 오류: {ex}", file=sys.stderr)
+        print(f"🐰 ヤダ！ [E400] 파일 오류: {ex}", file=sys.stderr)
     except UsagiError as ex:
-        where = f"{label}:{ex.line}" + (f":{ex.column}" if ex.column else "") if ex.line else label
-        print(f"🐰 {where}: {ex}", file=sys.stderr)
+        print(diagnostic(ex, source, label, not args.plain_errors), file=sys.stderr)
     except RecursionError:
-        print(f"🐰 {label}: 재귀 호출이 너무 깊어요.", file=sys.stderr)
+        print(f"🐰 ヤダ！ [E900] {label}: 재귀 호출이 너무 깊어요.", file=sys.stderr)
     return 1
 
 

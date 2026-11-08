@@ -1,0 +1,27 @@
+# UsagiLang v0.2 demo
+クラス Counter {
+    ウララヤハ init(self, first) {
+        self.value = first
+    }
+    ウララヤハ next(self) {
+        self.value = self.value + 1
+        ウラララ self.value
+    }
+}
+
+プルャ counter = Counter(2)
+ウラ "counter =", counter.next()
+
+プルャ numbers = [1, 2, 3]
+numbers[1] = 99
+numbers.append(4)
+ウラ "numbers =", numbers
+
+ウラ "square root =", math.sqrt(16)
+ウラ "upper =", text.upper("usagi")
+
+ためす {
+    なげる "ヤハ!"
+} つかまえる err {
+    ウラ "caught:", err
+}
