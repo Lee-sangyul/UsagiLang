@@ -34,6 +34,8 @@ KEYWORDS = {
     "or": "OR", "또는": "OR",
     "not": "NOT", "아님": "NOT",
     "ナシ": "NONE", "없음": "NONE", "null": "NONE",
+    "import": "IMPORT", "가져와": "IMPORT", "インポート": "IMPORT",
+    "as": "AS", "별칭": "AS", "として": "AS",
 }
 
 OPERATORS = {
@@ -42,7 +44,7 @@ OPERATORS = {
     "+": "PLUS", "-": "MINUS", "*": "STAR", "/": "SLASH", "%": "PERCENT",
     "<": "LT", ">": "GT", "!": "NOT", "=": "ASSIGN",
     "(": "LPAREN", ")": "RPAREN", "{": "LBRACE", "}": "RBRACE",
-    "[": "LBRACKET", "]": "RBRACKET", ",": "COMMA", ";": "SEP",
+    "[": "LBRACKET", "]": "RBRACKET", ",": "COMMA", ";": "SEP", ".": "DOT",
 }
 
 
@@ -219,6 +221,10 @@ class Parser:
 
     def statement(self) -> Node:
         t = self.cur
+        if self.accept("IMPORT"):
+            filename = self.take("STRING").value
+            alias = self.take("NAME").text if self.accept("AS") else None
+            return Node("import", (filename, alias), t.line)
         if self.accept("LET"):
             name = self.take("NAME").text
             self.take("ASSIGN")
@@ -322,7 +328,7 @@ class Parser:
 
     def postfix(self) -> Node:
         node = self.primary()
-        while self.cur.kind in ("LPAREN", "LBRACKET"):
+        while self.cur.kind in ("LPAREN", "LBRACKET", "DOT"):
             t = self.take()
             if t.kind == "LPAREN":
                 args: list[Node] = []
@@ -332,10 +338,13 @@ class Parser:
                         args.append(self.expr())
                 self.take("RPAREN")
                 node = Node("call", (node, args), t.line)
-            else:
+            elif t.kind == "LBRACKET":
                 index = self.expr()
                 self.take("RBRACKET")
                 node = Node("index", (node, index), t.line)
+            else:
+                member = self.take("NAME").text
+                node = Node("member", (node, member), t.line)
         return node
 
     def primary(self) -> Node:
@@ -366,8 +375,12 @@ class Parser:
 
 
 class Environment:
-    def __init__(self, parent: Environment | None = None):
+    def __init__(self, parent: Environment | None = None,
+                 source_path: Path | None = None):
         self.parent = parent
+        self.source_path = source_path if source_path is not None else (
+            parent.source_path if parent is not None else None
+        )
         self.values: dict[str, Any] = {}
 
     def define(self, name: str, value: Any) -> None:
@@ -405,6 +418,12 @@ class Builtin:
     maximum: int | None
 
 
+@dataclass
+class ModuleNamespace:
+    path: Path
+    environment: Environment
+
+
 class ReturnFlow(Exception):
     def __init__(self, value: Any):
         self.value = value
@@ -425,13 +444,16 @@ class Interpreter:
         self.stdout = stdout if stdout is not None else sys.stdout
         self.max_steps = max_steps
         self.steps = 0
-        self.globals = Environment()
-        self.globals.define("input", Builtin("input", self.read_input, 0, 1))
-        self.globals.define("len", Builtin("len", len, 1, 1))
-        self.globals.define("int", Builtin("int", int, 1, 1))
-        self.globals.define("float", Builtin("float", float, 1, 1))
-        self.globals.define("str", Builtin("str", self.stringify, 1, 1))
-        self.globals.define("range", Builtin("range", range, 1, 3))
+        self.builtins = Environment()
+        self.globals = Environment(self.builtins)
+        self.module_cache: dict[Path, ModuleNamespace] = {}
+        self.loading_modules: set[Path] = set()
+        self.builtins.define("input", Builtin("input", self.read_input, 0, 1))
+        self.builtins.define("len", Builtin("len", len, 1, 1))
+        self.builtins.define("int", Builtin("int", int, 1, 1))
+        self.builtins.define("float", Builtin("float", float, 1, 1))
+        self.builtins.define("str", Builtin("str", self.stringify, 1, 1))
+        self.builtins.define("range", Builtin("range", range, 1, 3))
 
     @staticmethod
     def stringify(value: Any) -> str:
@@ -458,7 +480,8 @@ class Interpreter:
         if self.steps > self.max_steps:
             raise UsagiError(f"명령 실행 한도({self.max_steps}회)를 넘었어요. 무한 반복인지 확인하세요.", line)
 
-    def run(self, source: str) -> None:
+    def run(self, source: str, source_path: str | Path | None = None) -> None:
+        self.globals.source_path = Path(source_path).resolve() if source_path is not None else None
         program = Parser(tokenize(source)).parse()
         try:
             self.exec_block(program, self.globals)
@@ -469,6 +492,43 @@ class Interpreter:
         except ContinueFlow:
             raise UsagiError("반복문 밖에서는 プワッ/푸왓을 사용할 수 없어요.") from None
 
+    def import_module(self, filename: str, env: Environment, line: int) -> ModuleNamespace:
+        relative = Path(filename)
+        if not filename or relative.is_absolute() or relative.suffix != ".usagi":
+            raise UsagiError('import 경로는 상대 경로의 .usagi 파일이어야 해요.', line)
+        base = env.source_path.parent if env.source_path is not None else Path.cwd()
+        path = (base / relative).resolve()
+        if path in self.loading_modules:
+            raise UsagiError(f"순환 import가 발생했어요: {path}", line)
+        if path in self.module_cache:
+            return self.module_cache[path]
+
+        try:
+            source = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError) as ex:
+            raise UsagiError(f"import 파일 오류 ({path}): {ex}", line) from None
+        try:
+            program = Parser(tokenize(source)).parse()
+        except UsagiError as ex:
+            location = f"{path}:{ex.line}" if ex.line else str(path)
+            raise UsagiError(f"모듈 구문 오류 ({location}): {ex}", line) from None
+
+        scope = Environment(self.builtins, source_path=path)
+        self.loading_modules.add(path)
+        try:
+            self.exec_block(program, scope)
+        except UsagiError as ex:
+            location = f"{path}:{ex.line}" if ex.line else str(path)
+            raise UsagiError(f"모듈 실행 오류 ({location}): {ex}", line) from None
+        except (ReturnFlow, BreakFlow, ContinueFlow):
+            raise UsagiError(f"모듈 최상위에는 return/break/continue를 사용할 수 없어요: {path}", line) from None
+        finally:
+            self.loading_modules.remove(path)
+
+        module = ModuleNamespace(path, scope)
+        self.module_cache[path] = module
+        return module
+
     def exec_block(self, stmts: list[Node], env: Environment) -> None:
         for stmt in stmts:
             self.tick(stmt.line)
@@ -476,7 +536,12 @@ class Interpreter:
 
     def execute(self, n: Node, env: Environment) -> None:
         k, a = n.kind, n.args
-        if k == "let":
+        if k == "import":
+            alias = a[1] if a[1] is not None else Path(a[0]).stem
+            if not alias.isidentifier() or alias in KEYWORDS:
+                raise UsagiError("모듈 이름이 유효하지 않아요. as/별칭/として로 이름을 지정하세요.", n.line)
+            env.define(alias, self.import_module(a[0], env, n.line))
+        elif k == "let":
             env.define(a[0], self.evaluate(a[1], env))
         elif k == "assign":
             env.assign(a[0], self.evaluate(a[1], env), n.line)
@@ -528,6 +593,13 @@ class Interpreter:
             return a[0]
         if k == "name":
             return env.get(a[0], n.line)
+        if k == "member":
+            module = self.evaluate(a[0], env)
+            if not isinstance(module, ModuleNamespace):
+                raise UsagiError("점(.) 접근은 import한 모듈에서만 사용할 수 있어요.", n.line)
+            if a[1] not in module.environment.values:
+                raise UsagiError(f"모듈 {module.path.name}에 정의되지 않은 이름: {a[1]}", n.line)
+            return module.environment.values[a[1]]
         if k == "list":
             return [self.evaluate(e, env) for e in a[0]]
         if k == "unary":
@@ -605,7 +677,7 @@ def main(argv: list[str] | None = None) -> int:
     label = args.file or "<code>"
     try:
         src = Path(args.file).read_text(encoding="utf-8-sig") if args.file else args.code
-        Interpreter(max_steps=args.max_steps).run(src)
+        Interpreter(max_steps=args.max_steps).run(src, source_path=args.file)
         return 0
     except (OSError, UnicodeError) as ex:
         print(f"파일 오류: {ex}", file=sys.stderr)
