@@ -76,7 +76,7 @@ class ImportTests(unittest.TestCase):
             self.execute('import "library.usagi" as lib\nウラ lib.missing')
 
     def test_member_on_non_module(self):
-        with self.assertRaisesRegex(UsagiError, "모듈에서만"):
+        with self.assertRaisesRegex(UsagiError, "접근할 수 없어요"):
             self.execute('プルャ x=1\nウラ x.y')
 
     def test_reject_absolute_and_non_usagi_paths(self):
