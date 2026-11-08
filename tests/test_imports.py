@@ -123,7 +123,7 @@ class ImportTests(unittest.TestCase):
         output = io.StringIO()
         Interpreter(stdout=output).run(code, source_path=code_path)
         self.assertEqual(output.getvalue(),
-                         "4 squared = 16\\n2 + 3 = 5\\npi = 3.14159\\n")
+                         "4 squared = 16\n2 + 3 = 5\npi = 3.14159\n")
 
     def test_import_tokens(self):
         kinds = [t.kind for t in tokenize('import 가져와 インポート as 별칭 として')]
