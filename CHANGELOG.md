@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Local `.usagi` file imports via `import` / `インポート` / `가져와` and optional namespace aliases (`as` / `として` / `별칭`).
+- Module member access with `module.name`, caching, file-relative paths, separate environments, and cyclic import detection.
+- Import examples and regression tests; Korean and Japanese documentation updates.
+
 ## [0.1.0-alpha] - 2026-11-05
 
 First experimental release.

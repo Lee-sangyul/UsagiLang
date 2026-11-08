@@ -18,7 +18,7 @@ python usagilang.py -c '우라 "Hello, World!"'
 # Hello, World!
 ```
 
-**Features:** Japanese and Korean keyword aliases · variables · lists · if/else · while/for · functions · recursion · input/output · no third-party dependencies.
+**Features:** Japanese and Korean keyword aliases · variables · lists · module imports · if/else · while/for · functions · recursion · input/output · no third-party dependencies.
 
 **Release:** `v0.1.0-alpha` · **License:** MIT (original code and documentation only) · **Python:** 3.10+
 
@@ -70,6 +70,8 @@ Windows에서는 환경에 따라 `python` 대신 `py`를 사용하세요.
 | 또는 | `or`, `||` | `또는` |
 | 부정 | `not`, `!` | `아님` |
 | 값 없음 | `ナシ`, `null` | `없음` |
+| 모듈 가져오기 | `import`, `インポート` | `가져와` |
+| 모듈 이름 지정 | `as`, `として` | `별칭` |
 
 ## 문법
 
@@ -98,6 +100,28 @@ Windows에서는 환경에 따라 `python` 대신 `py`를 사용하세요.
 }
 ```
 
+## 모듈 import
+
+다른 `.usagi` 파일에서 함수와 변수를 가져올 수 있습니다. 모듈은 별도의 변수 공간을 가지며, **한 번 실행한 모듈은 같은 실행 중 다시 실행하지 않습니다.**
+
+```usagi
+# examples/imports.usagi
+インポート "modules/math.usagi" として 数学
+ウラ 数学.square(4)
+우라 数学.pi
+```
+
+```bash
+python usagilang.py examples/imports.usagi
+```
+
+- 문법: `import "경로.usagi" as 이름` / `가져와 "경로.usagi" 별칭 이름` / `インポート "경로.usagi" として 名前`.
+- `as`를 생략하면 파일명에서 확장자를 뺀 이름을 사용합니다. 파일명이 변수 이름으로 적합하지 않으면 `as`를 지정하세요.
+- 경로는 **import를 작성한 파일을 기준**으로 해석하며, `-c` 모드에서는 현재 작업 폴더를 기준으로 합니다. 상대 경로의 `.usagi` 파일만 지원합니다.
+- 함수나 변수는 `모듈.함수()`, `모듈.변수`로 접근합니다. 일반 변수의 `.` 접근 및 모듈 멤버 직접 대입은 아직 지원하지 않습니다.
+- 순환 import는 오류로 처리합니다. 모듈 실행도 동일한 `--max-steps` 한도를 공유합니다.
+- import는 Python 패키지를 가져오지 않으며, 범용 파일 I/O나 패키지 관리 기능을 제공하지 않습니다.
+
 ## 테스트
 
 ```bash
@@ -108,5 +132,5 @@ python -m unittest discover -s tests -v
 
 - Python 코드를 `eval`/`exec`로 실행하지 않는 독립 파서 및 트리 탐색형 인터프리터.
 - 반복 실행 횟수는 기본 100,000회 제한 (`--max-steps 5000`).
-- 실제 프로젝트 언어 v0.1이며 모듈 import, 파일 I/O, 객체, 대입형 리스트 수정, 패키지 관리 등은 미구현.
+- 실제 프로젝트 언어 v0.1이며 일반 파일 I/O, 객체, 대입형 리스트 수정, 패키지 관리 등은 미구현.
 - 믿을 수 없는 코드를 시스템 수준으로 격리하는 보안 샌드박스는 아님. 재귀·메모리·출력 크기 제한은 완전하지 않음.
