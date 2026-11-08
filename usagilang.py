@@ -8,6 +8,10 @@
 from __future__ import annotations
 
 import argparse
+import json
+import math as pymath
+import random as pyrandom
+import time
 from dataclasses import dataclass
 from pathlib import Path
 import sys
@@ -36,6 +40,10 @@ KEYWORDS = {
     "ナシ": "NONE", "없음": "NONE", "null": "NONE",
     "import": "IMPORT", "가져와": "IMPORT", "インポート": "IMPORT",
     "as": "AS", "별칭": "AS", "として": "AS",
+    "class": "CLASS", "클래스": "CLASS", "クラス": "CLASS",
+    "try": "TRY", "시도": "TRY", "ためす": "TRY",
+    "catch": "CATCH", "잡기": "CATCH", "つかまえる": "CATCH",
+    "throw": "THROW", "던지기": "THROW", "なげる": "THROW",
 }
 
 OPERATORS = {
@@ -49,10 +57,12 @@ OPERATORS = {
 
 
 class UsagiError(Exception):
-    def __init__(self, message: str, line: int = 0, column: int = 0):
+    def __init__(self, message: str, line: int = 0, column: int = 0,
+                 code: str = "E100"):
         super().__init__(message)
         self.line = line
         self.column = column
+        self.code = code
 
 
 @dataclass(frozen=True)
@@ -200,7 +210,7 @@ class Parser:
 
     def require_separator(self, stmt: Node) -> None:
         # 블록문은 중괄호가 구문을 나누므로 별도 줄바꿈이 필수가 아니다.
-        if stmt.kind in ("if", "while", "for", "func"):
+        if stmt.kind in ("if", "while", "for", "func", "class", "try"):
             return
         if (self.cur.kind not in ("SEP", "EOF", "RBRACE")
                 and self.tokens[self.pos - 1].kind != "SEP"):
@@ -225,6 +235,23 @@ class Parser:
             filename = self.take("STRING").value
             alias = self.take("NAME").text if self.accept("AS") else None
             return Node("import", (filename, alias), t.line)
+        if self.accept("CLASS"):
+            name = self.take("NAME").text
+            methods = self.block()
+            if any(method.kind != "func" for method in methods):
+                raise UsagiError("클래스 안에는 함수 선언만 넣을 수 있어요.", t.line)
+            if len({method.args[0] for method in methods}) != len(methods):
+                raise UsagiError("클래스 메서드가 중복됐어요.", t.line)
+            return Node("class", (name, methods), t.line)
+        if self.accept("TRY"):
+            body = self.block()
+            self.skip_seps()
+            self.take("CATCH")
+            name = self.take("NAME").text
+            handler = self.block()
+            return Node("try", (body, name, handler), t.line)
+        if self.accept("THROW"):
+            return Node("throw", (self.expr(),), t.line)
         if self.accept("LET"):
             name = self.take("NAME").text
             self.take("ASSIGN")
@@ -269,11 +296,12 @@ class Parser:
             return Node("break", (), t.line)
         if self.accept("CONTINUE"):
             return Node("continue", (), t.line)
-        if t.kind == "NAME" and self.peek().kind == "ASSIGN":
-            self.take("NAME")
-            self.take("ASSIGN")
-            return Node("assign", (t.text, self.expr()), t.line)
-        return Node("expr_stmt", (self.expr(),), t.line)
+        target = self.expr()
+        if self.accept("ASSIGN"):
+            if target.kind not in ("name", "index", "member"):
+                raise UsagiError("대입 대상이 유효하지 않아요.", t.line, t.column)
+            return Node("set", (target, self.expr()), t.line)
+        return Node("expr_stmt", (target,), t.line)
 
     def expr(self) -> Node:
         return self.or_expr()
@@ -422,6 +450,30 @@ class Builtin:
 class ModuleNamespace:
     path: Path
     environment: Environment
+
+
+@dataclass
+class StandardNamespace:
+    name: str
+    members: dict[str, Any]
+
+
+@dataclass
+class ClassValue:
+    name: str
+    methods: dict[str, UserFunction]
+
+
+@dataclass
+class InstanceValue:
+    cls: ClassValue
+    fields: dict[str, Any]
+
+
+@dataclass
+class BoundMethod:
+    function: UserFunction
+    receiver: InstanceValue
 
 
 class ReturnFlow(Exception):
