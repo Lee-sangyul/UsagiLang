@@ -15,7 +15,7 @@ def execute_usagi(source, input_text, mode):
         except UsagiError as exc:
             return json.dumps({"ok":False,"output":diagnostic(exc,source,"main.usagi")},ensure_ascii=False)
     try:
-        runner=Interpreter(stdin=io.StringIO(input_text + ("\\n" if input_text and not input_text.endswith("\\n") else "")),stdout=output,max_steps=20000)
+        runner=Interpreter(stdin=io.StringIO(input_text + ("\n" if input_text and not input_text.endswith("\n") else "")),stdout=output,max_steps=20000)
         runner.run(source,source_path="/home/pyodide/main.usagi")
         return json.dumps({"ok":True,"output":output.getvalue()[:150000]},ensure_ascii=False)
     except UsagiError as exc:
