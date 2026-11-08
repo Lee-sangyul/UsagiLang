@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>UsagiLang Playground 🐰</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark;background:#0e1320;color:#f3f5ff}
+*{box-sizing:border-box}body{margin:0}header{padding:18px max(20px,calc((100vw - 1200px)/2));border-bottom:1px solid #2c3449;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header strong{font-size:1.3rem}header span{color:#aab4cf}.container{max-width:1200px;margin:auto;padding:24px 20px}
+.intro{color:#b7c1db;margin-top:0}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+button,select{background:#25304b;color:white;border:1px solid #485677;border-radius:10px;padding:11px 16px;font:inherit;cursor:pointer}
+button:hover{background:#354361}button:disabled{opacity:.45;cursor:not-allowed}
+.primary{background:#7463ec;border-color:#7463ec;font-weight:700}.primary:hover{background:#8a78ff}
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);gap:16px}
+.panel{background:#161e30;border:1px solid #333e58;border-radius:15px;overflow:hidden;min-width:0}
+.panelhead{padding:12px 16px;border-bottom:1px solid #333e58;display:flex;justify-content:space-between;align-items:center;color:#bdc9e5}
+textarea{width:100%;display:block;border:0;background:#101827;color:#e8efff;padding:17px;font:15px/1.65 ui-monospace,Menlo,Consolas,monospace;resize:vertical;outline:none;tab-size:4}
+#code{min-height:420px}#stdin{min-height:84px}pre{margin:0;padding:17px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:245px;font:14px/1.7 ui-monospace,Menlo,Consolas,monospace}
+#status{font-size:.9rem;color:#a7b5d7}.hint{font-size:.87rem;color:#aeb9d1}a{color:#b9a9ff}footer{margin:24px 0;color:#96a2bc;font-size:.87rem}
+@media(max-width:750px){.grid{grid-template-columns:1fr}#code{min-height:320px}header{padding:15px 20px}}
+</style>
+</head>
+<body>
+<header><strong>🐰 UsagiLang Playground</strong><span>Write. Run. ヤハ！</span></header>
+<main class="container">
+<p class="intro">한국어·일본어 우사기어를 브라우저에서 바로 실행해 보세요. 서버에 코드를 전송하지 않습니다.</p>
+<div class="toolbar">
+<button id="run" class="primary" disabled>▶ 실행 (Ctrl+Enter)</button>
+<button id="stop" disabled>■ 중지</button>
+<button id="check" disabled>✓ 문법 검사</button>
+<button id="clear">콘솔 지우기</button>
+<select id="examples" aria-label="예제 선택"><option value="">예제 불러오기</option><option value="hello">Hello World</option><option value="loop">반복문</option><option value="function">함수</option><option value="class">클래스</option><option value="input">입력</option></select>
+<button id="save">.usagi 저장</button>
+<button id="open">파일 열기</button>
+<input id="file" type="file" accept=".usagi,.txt,text/plain" hidden>
+</div>
+<div class="grid">
+<section class="panel"><div class="panelhead"><strong>main.usagi</strong><span id="status" role="status" aria-live="polite">엔진 준비 중…</span></div><textarea id="code" spellcheck="false" aria-label="우사기어 코드 편집기">푸루야 이름 = "UsagiLang"
+우라 "Hello, " + 이름 + "! 🐰"
+츠츠우라우라 i 안에 range(1, 4) {
+    우라 "ヤハ!", i
+}</textarea></section>
+<div>
+<section class="panel"><div class="panelhead"><strong>실행 결과</strong><span>콘솔</span></div><pre id="output" aria-live="polite">🐰 실행 엔진 로딩 중...</pre></section>
+<section class="panel" style="margin-top:16px"><div class="panelhead"><strong>표준 입력</strong><span>줄마다 하나씩</span></div><textarea id="stdin" aria-label="표준 입력" placeholder="input()에 전달할 값을 줄별로 입력하세요"></textarea></section>
+</div></div>
+<p class="hint">처음 접속하면 Python 엔진을 다운로드하므로 로딩 시간이 걸릴 수 있어요. 실행 중지는 작업자를 재시작합니다. 외부 모듈 파일 및 pkg: 패키지는 온라인 버전에서 기본 제공하지 않습니다.</p>
+<footer>Unofficial fan project · <a href="https://github.com/Lee-sangyul/UsagiLang" rel="noopener noreferrer">Source code</a> · No official character artwork</footer>
+</main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const samples={
+ hello:'우라 "Hello, World! 🐰"',
+ loop:'푸루야 count = 0\n푸루루루 count < 5 {\n    우라 "ヤハ!", count\n    count = count + 1\n}',
+ function:'우라라야하 add(a, b) {\n    우라라라 a + b\n}\n우라 "결과:", add(20, 22)',
+ class:'클래스 Box {\n    우라라야하 init(self, value) { self.value = value }\n}\n푸루야 box = Box(42)\n우라 box.value',
+ input:'푸루야 name = 하이야하우나("이름: ")\n우라 "안녕, " + name'
+};
+let worker=null,ready=false,running=false,seq=0,pending=0;
+const code=$("code"),out=$("output");
+function status(s){$("status").textContent=s}
+function controls(){ $("run").disabled=!ready||running;$("check").disabled=!ready||running;$("stop").disabled=!running }
+function boot(){
+ ready=false;running=false;controls();status("엔진 준비 중…");
+ if(worker)worker.terminate();
+ worker=new Worker("./runner-worker.js");
+ worker.onmessage=({data:m})=>{
+  if(m.type==="ready"){ready=true;status("준비 완료");out.textContent="🐰 준비 완료! 실행 버튼을 눌러보세요.";controls()}
+  if(m.type==="fatal"){ready=false;running=false;status("로딩 실패");out.textContent="엔진 로딩 실패: "+m.error;controls()}
+  if(m.type==="result"&&m.id===pending){running=false;status(m.ok?"실행 완료":"실행 오류");out.textContent=m.output|| (m.ok?"✓ 완료 (출력 없음)":"오류");controls()}
+ };
+ worker.onerror=e=>{ready=false;running=false;status("엔진 오류");out.textContent="작업자 오류: "+e.message;controls()};
+}
+function execute(mode){
+ if(!ready||running)return;
+ running=true;pending=++seq;controls();status(mode==="check"?"검사 중…":"실행 중…");
+ out.textContent="⏳ "+(mode==="check"?"문법 검사":"코드 실행")+" 중...";
+ worker.postMessage({type:"execute",id:pending,mode,source:code.value,input:$("stdin").value});
+}
+$("run").onclick=()=>execute("run");$("check").onclick=()=>execute("check");
+$("stop").onclick=()=>{if(!running)return;boot();out.textContent="■ 사용자가 실행을 중지했습니다. 엔진을 다시 준비합니다."};
+$("clear").onclick=()=>{out.textContent=""};
+$("examples").onchange=e=>{if(samples[e.target.value])code.value=samples[e.target.value];e.target.value=""};
+$("save").onclick=()=>{const a=document.createElement("a"),url=URL.createObjectURL(new Blob([code.value],{type:"text/plain;charset=utf-8"}));a.href=url;a.download="main.usagi";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$("open").onclick=()=>$("file").click();
+$("file").onchange=async e=>{const f=e.target.files[0];if(f){if(f.size>1024*1024){alert("1MB 이하의 파일만 열 수 있어요.")}else{code.value=await f.text()}}e.target.value=""};
+code.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();execute("run")}if(e.key==="Tab"){e.preventDefault();const a=code.selectionStart,b=code.selectionEnd;code.setRangeText("    ",a,b,"end")}});
+boot();
+</script>
+</body></html>
