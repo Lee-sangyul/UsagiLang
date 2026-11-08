@@ -602,11 +602,18 @@ class Interpreter:
             raise UsagiError("반복문 밖에서는 プワッ/푸왓을 사용할 수 없어요.") from None
 
     def import_module(self, filename: str, env: Environment, line: int) -> ModuleNamespace:
-        relative = Path(filename)
-        if not filename or relative.is_absolute() or relative.suffix != ".usagi":
-            raise UsagiError('import 경로는 상대 경로의 .usagi 파일이어야 해요.', line)
-        base = env.source_path.parent if env.source_path is not None else Path.cwd()
-        path = (base / relative).resolve()
+        if filename.startswith("pkg:"):
+            from usagi_packages import PackageError, resolve
+            try:
+                path = resolve(filename[4:], env.source_path)
+            except PackageError as ex:
+                raise UsagiError(f"패키지 가져오기 실패: {ex}", line) from None
+        else:
+            relative = Path(filename)
+            if not filename or relative.is_absolute() or relative.suffix != ".usagi":
+                raise UsagiError('import 경로는 상대 경로의 .usagi 파일이어야 해요.', line)
+            base = env.source_path.parent if env.source_path is not None else Path.cwd()
+            path = (base / relative).resolve()
         if path in self.loading_modules:
             raise UsagiError(f"순환 import가 발생했어요: {path}", line)
         if path in self.module_cache:
@@ -727,7 +734,9 @@ class Interpreter:
     def execute(self, n: Node, env: Environment) -> None:
         k, a = n.kind, n.args
         if k == "import":
-            alias = a[1] if a[1] is not None else Path(a[0]).stem
+            alias = a[1] if a[1] is not None else (
+                a[0][4:] if a[0].startswith("pkg:") else Path(a[0]).stem
+            )
             if not alias.isidentifier() or alias in KEYWORDS:
                 raise UsagiError("모듈 이름이 유효하지 않아요. as/별칭/として로 이름을 지정하세요.", n.line)
             env.define(alias, self.import_module(a[0], env, n.line))
@@ -843,28 +852,126 @@ class Interpreter:
         raise UsagiError(f"알 수 없는 식: {k}", n.line)
 
 
+def diagnostic(error: UsagiError, source: str, label: str = "<code>",
+               themed: bool = True) -> str:
+    """User-friendly source diagnostics with stable error codes and line markers."""
+    location = f"{label}:{error.line}" if error.line else label
+    if error.column:
+        location += f":{error.column}"
+    message = f"{'🐰 ヤダ！ ' if themed else ''}[{error.code}] {location}: {error}"
+    if error.line:
+        lines = source.splitlines()
+        if 1 <= error.line <= len(lines):
+            excerpt = lines[error.line - 1]
+            message += "\n  " + excerpt
+            if error.column:
+                message += "\n  " + (" " * (error.column - 1)) + "^"
+    if "정의되지 않은 이름" in str(error):
+        message += "\n💡 プルャ/푸루야로 변수를 먼저 선언하세요."
+    return message
+
+
+def incomplete_input(source: str) -> bool:
+    """Detect unfinished blocks or parentheses to support multiline REPL."""
+    try:
+        tokens = tokenize(source)
+    except UsagiError as exc:
+        return "문자열이 닫히지 않았어요" in str(exc)
+    depths = {"LBRACE": 0, "LPAREN": 0, "LBRACKET": 0}
+    closes = {"RBRACE": "LBRACE", "RPAREN": "LPAREN", "RBRACKET": "LBRACKET"}
+    for token in tokens:
+        if token.kind in depths:
+            depths[token.kind] += 1
+        elif token.kind in closes:
+            depths[closes[token.kind]] -= 1
+    return any(n > 0 for n in depths.values())
+
+
+def repl_loop(stdin: TextIO | None = None, stdout: TextIO | None = None,
+              stderr: TextIO | None = None, max_steps: int = 100_000,
+              themed: bool = True) -> int:
+    reader = stdin if stdin is not None else sys.stdin
+    writer = stdout if stdout is not None else sys.stdout
+    errors = stderr if stderr is not None else sys.stderr
+    runner = Interpreter(stdin=reader, stdout=writer, max_steps=max_steps)
+    print("🐰 UsagiLang REPL v0.2 (:help, :reset, :exit)", file=writer)
+    pending: list[str] = []
+    while True:
+        writer.write("... " if pending else ">>> ")
+        writer.flush()
+        line = reader.readline()
+        if line == "":
+            writer.write("\n")
+            break
+        stripped = line.strip()
+        if not pending and stripped in (":quit", ":exit", ":q"):
+            break
+        if not pending and stripped == ":help":
+            print(":help :reset :exit | Enter UsagiLang code", file=writer)
+            continue
+        if not pending and stripped == ":reset":
+            runner = Interpreter(stdin=reader, stdout=writer, max_steps=max_steps)
+            print("フゥン… 환경 초기화 완료", file=writer)
+            continue
+        if not pending and not stripped:
+            continue
+        pending.append(line)
+        source = "".join(pending)
+        if incomplete_input(source):
+            continue
+        try:
+            runner.run(source)
+        except UsagiError as ex:
+            print(diagnostic(ex, source, "<repl>", themed), file=errors)
+        except RecursionError:
+            print("🐰 ヤダ！ [E900] 재귀 호출이 너무 깊어요.", file=errors)
+        pending = []
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
-    cli = argparse.ArgumentParser(description="UsagiLang v0.1 인터프리터 🐰")
-    cli.add_argument("file", nargs="?", help="실행할 .usagi 파일")
-    cli.add_argument("-c", "--code", help="문자열로 입력한 UsagiLang 코드 실행")
-    cli.add_argument("--max-steps", type=int, default=100_000, help="실행 명령 상한(기본 100000)")
-    args = cli.parse_args(argv)
-    if bool(args.file) == (args.code is not None):
-        cli.error("파일 경로나 -c 코드 중 하나를 지정하세요.")
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if arguments and arguments[0] == "pkg":
+        from usagi_packages import PackageError, command
+        try:
+            return command(arguments[1:], sys.stdout)
+        except (PackageError, OSError, UnicodeError) as ex:
+            print(f"🐰 ヤダ！ [E500] {ex}", file=sys.stderr)
+            return 1
+
+    command_name = arguments.pop(0) if arguments and arguments[0] in ("run", "check", "repl") else "run"
+    cli = argparse.ArgumentParser(
+        description="UsagiLang v0.2 🐰 (run / check / repl / pkg)"
+    )
+    if command_name != "repl":
+        cli.add_argument("file", nargs="?", help="실행하거나 검사할 .usagi 파일")
+        cli.add_argument("-c", "--code", help="직접 입력하는 UsagiLang 코드")
+    cli.add_argument("--max-steps", type=int, default=100_000, help="실행 명령 상한")
+    cli.add_argument("--plain-errors", action="store_true", help="우사기 테마 없이 오류 표시")
+    args = cli.parse_args(arguments)
     if args.max_steps < 1:
         cli.error("--max-steps는 1 이상이어야 해요.")
+    if command_name == "repl":
+        return repl_loop(max_steps=args.max_steps, themed=not args.plain_errors)
+    if bool(args.file) == (args.code is not None):
+        cli.error("파일 경로나 -c 코드 중 하나를 지정하세요.")
+
     label = args.file or "<code>"
+    source = ""
     try:
-        src = Path(args.file).read_text(encoding="utf-8-sig") if args.file else args.code
-        Interpreter(max_steps=args.max_steps).run(src, source_path=args.file)
+        source = Path(args.file).read_text(encoding="utf-8-sig") if args.file else args.code
+        if command_name == "check":
+            Parser(tokenize(source)).parse()
+            print(f"🐰 문법 검사 통과: {label}")
+            return 0
+        Interpreter(max_steps=args.max_steps).run(source, source_path=args.file)
         return 0
     except (OSError, UnicodeError) as ex:
-        print(f"파일 오류: {ex}", file=sys.stderr)
+        print(f"🐰 ヤダ！ [E400] 파일 오류: {ex}", file=sys.stderr)
     except UsagiError as ex:
-        where = f"{label}:{ex.line}" + (f":{ex.column}" if ex.column else "") if ex.line else label
-        print(f"🐰 {where}: {ex}", file=sys.stderr)
+        print(diagnostic(ex, source, label, not args.plain_errors), file=sys.stderr)
     except RecursionError:
-        print(f"🐰 {label}: 재귀 호출이 너무 깊어요.", file=sys.stderr)
+        print(f"🐰 ヤダ！ [E900] {label}: 재귀 호출이 너무 깊어요.", file=sys.stderr)
     return 1
 
 
