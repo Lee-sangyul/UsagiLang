@@ -1,5 +1,7 @@
 # 🐰 UsagiLang v0.1.0-alpha
 
+[🇯🇵 日本語版 README](README.ja.md) | English / 한국어
+
 **An experimental programming language inspired by Usagi’s expressions from *Chiikawa*.**
 
 日本語と한국어 키워드를 모두 지원하는 Python 기반 독립 인터프리터입니다.
