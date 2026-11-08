@@ -18,7 +18,7 @@ python usagilang.py -c '우라 "Hello, World!"'
 # Hello, World!
 ```
 
-**Features:** Japanese and Korean keyword aliases · variables · lists · if/else · while/for · functions · recursion · input/output · no third-party dependencies.
+**Features:** Japanese and Korean keyword aliases · variables · lists · module imports · if/else · while/for · functions · recursion · input/output · no third-party dependencies.
 
 **Release:** `v0.1.0-alpha` · **License:** MIT (original code and documentation only) · **Python:** 3.10+
 
@@ -100,7 +100,7 @@ Windows에서는 환경에 따라 `python` 대신 `py`를 사용하세요.
 }
 ```
 
-## 모듈 import (개발 브랜치 기능)
+## 모듈 import
 
 다른 `.usagi` 파일에서 함수와 변수를 가져올 수 있습니다. 모듈은 별도의 변수 공간을 가지며, **한 번 실행한 모듈은 같은 실행 중 다시 실행하지 않습니다.**
 
