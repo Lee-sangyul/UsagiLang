@@ -506,6 +506,33 @@ class Interpreter:
         self.builtins.define("float", Builtin("float", float, 1, 1))
         self.builtins.define("str", Builtin("str", self.stringify, 1, 1))
         self.builtins.define("range", Builtin("range", range, 1, 3))
+        self.builtins.define("abs", Builtin("abs", abs, 1, 1))
+        self.builtins.define("round", Builtin("round", round, 1, 2))
+        self.builtins.define("sum", Builtin("sum", sum, 1, 1))
+        self.builtins.define("min", Builtin("min", min, 1, None))
+        self.builtins.define("max", Builtin("max", max, 1, None))
+        self.builtins.define("append", Builtin("append", self.list_append, 2, 2))
+        self.builtins.define("pop", Builtin("pop", self.list_pop, 1, 2))
+        self.builtins.define("math", StandardNamespace("math", {
+            "sqrt": Builtin("math.sqrt", pymath.sqrt, 1, 1),
+            "floor": Builtin("math.floor", pymath.floor, 1, 1),
+            "ceil": Builtin("math.ceil", pymath.ceil, 1, 1),
+            "pow": Builtin("math.pow", pymath.pow, 2, 2),
+            "pi": pymath.pi,
+        }))
+        self.builtins.define("text", StandardNamespace("text", {
+            "upper": Builtin("text.upper", self.text_upper, 1, 1),
+            "lower": Builtin("text.lower", self.text_lower, 1, 1),
+            "split": Builtin("text.split", self.text_split, 1, 2),
+            "join": Builtin("text.join", self.text_join, 2, 2),
+        }))
+        self.builtins.define("random", StandardNamespace("random", {
+            "randint": Builtin("random.randint", pyrandom.randint, 2, 2),
+            "choice": Builtin("random.choice", pyrandom.choice, 1, 1),
+        }))
+        self.builtins.define("clock", StandardNamespace("clock", {
+            "now": Builtin("clock.now", time.time, 0, 0),
+        }))
 
     @staticmethod
     def stringify(value: Any) -> str:
@@ -517,7 +544,37 @@ class Interpreter:
             return "ナシ"
         if isinstance(value, list):
             return "[" + ", ".join(Interpreter.stringify(v) for v in value) + "]"
+        if isinstance(value, InstanceValue):
+            return f"<{value.cls.name} instance>"
         return str(value)
+
+    @staticmethod
+    def list_append(items: Any, value: Any) -> None:
+        if not isinstance(items, list):
+            raise UsagiError("append() 첫 번째 인자는 리스트여야 해요.")
+        items.append(value)
+
+    @staticmethod
+    def list_pop(items: Any, index: int = -1) -> Any:
+        if not isinstance(items, list):
+            raise UsagiError("pop() 첫 번째 인자는 리스트여야 해요.")
+        return items.pop(index)
+
+    @staticmethod
+    def text_upper(value: str) -> str:
+        return value.upper()
+
+    @staticmethod
+    def text_lower(value: str) -> str:
+        return value.lower()
+
+    @staticmethod
+    def text_split(value: str, separator: str | None = None) -> list[str]:
+        return value.split(separator)
+
+    @staticmethod
+    def text_join(separator: str, values: list[str]) -> str:
+        return separator.join(values)
 
     def read_input(self, prompt: Any = "") -> str:
         self.stdout.write(self.stringify(prompt))
@@ -581,6 +638,87 @@ class Interpreter:
         self.module_cache[path] = module
         return module
 
+    def call_value(self, fn: Any, args: list[Any], line: int) -> Any:
+        if isinstance(fn, BoundMethod):
+            return self.call_value(fn.function, [fn.receiver, *args], line)
+        if isinstance(fn, ClassValue):
+            instance = InstanceValue(fn, {})
+            if "init" in fn.methods:
+                self.call_value(BoundMethod(fn.methods["init"], instance), args, line)
+            elif args:
+                raise UsagiError(f"{fn.name}()은 생성자 인자를 받지 않아요.", line)
+            return instance
+        if isinstance(fn, Builtin):
+            if len(args) < fn.minimum or (fn.maximum is not None and len(args) > fn.maximum):
+                raise UsagiError(f"{fn.name}() 인자 수가 잘못됐어요: {len(args)}개", line)
+            try:
+                return fn.fn(*args)
+            except UsagiError:
+                raise
+            except (TypeError, ValueError, OverflowError, IndexError, KeyError) as ex:
+                raise UsagiError(f"{fn.name}() 호출 오류: {ex}", line) from None
+        if isinstance(fn, UserFunction):
+            if len(args) != len(fn.params):
+                raise UsagiError(f"{fn.name}()는 인자 {len(fn.params)}개가 필요해요.", line)
+            local = Environment(fn.closure)
+            for name, value in zip(fn.params, args):
+                local.define(name, value)
+            try:
+                self.exec_block(fn.body, local)
+            except ReturnFlow as ret:
+                return ret.value
+            except (BreakFlow, ContinueFlow):
+                raise UsagiError("함수의 반복문 밖에서 break/continue를 사용할 수 없어요.", line) from None
+            return None
+        raise UsagiError("호출할 수 있는 함수 또는 클래스가 아니에요.", line)
+
+    def read_member(self, target: Any, name: str, line: int) -> Any:
+        if isinstance(target, ModuleNamespace):
+            if name not in target.environment.values:
+                raise UsagiError(f"모듈 {target.path.name}에 정의되지 않은 이름: {name}", line)
+            return target.environment.values[name]
+        if isinstance(target, StandardNamespace):
+            if name not in target.members:
+                raise UsagiError(f"{target.name}에 없는 기능: {name}", line)
+            return target.members[name]
+        if isinstance(target, InstanceValue):
+            if name in target.fields:
+                return target.fields[name]
+            if name in target.cls.methods:
+                return BoundMethod(target.cls.methods[name], target)
+            raise UsagiError(f"{target.cls.name}에 없는 속성: {name}", line)
+        if isinstance(target, list):
+            methods = {
+                "append": Builtin("list.append", lambda value: self.list_append(target, value), 1, 1),
+                "pop": Builtin("list.pop", lambda index=-1: self.list_pop(target, index), 0, 1),
+                "insert": Builtin("list.insert", lambda index, value: target.insert(index, value), 2, 2),
+            }
+            if name in methods:
+                return methods[name]
+        raise UsagiError("해당 값에서는 점(.) 속성에 접근할 수 없어요.", line)
+
+    def assign_target(self, target: Node, value: Any, env: Environment) -> None:
+        if target.kind == "name":
+            env.assign(target.args[0], value, target.line)
+            return
+        if target.kind == "index":
+            obj = self.evaluate(target.args[0], env)
+            index = self.evaluate(target.args[1], env)
+            if not isinstance(obj, list):
+                raise UsagiError("리스트 요소에만 대입할 수 있어요.", target.line)
+            try:
+                obj[index] = value
+            except (TypeError, IndexError) as ex:
+                raise UsagiError(f"리스트 대입 오류: {ex}", target.line) from None
+            return
+        if target.kind == "member":
+            obj = self.evaluate(target.args[0], env)
+            if not isinstance(obj, InstanceValue):
+                raise UsagiError("인스턴스 필드에만 직접 대입할 수 있어요.", target.line)
+            obj.fields[target.args[1]] = value
+            return
+        raise UsagiError("잘못된 대입 대상이에요.", target.line)
+
     def exec_block(self, stmts: list[Node], env: Environment) -> None:
         for stmt in stmts:
             self.tick(stmt.line)
@@ -597,6 +735,22 @@ class Interpreter:
             env.define(a[0], self.evaluate(a[1], env))
         elif k == "assign":
             env.assign(a[0], self.evaluate(a[1], env), n.line)
+        elif k == "set":
+            value = self.evaluate(a[1], env)
+            self.assign_target(a[0], value, env)
+        elif k == "class":
+            methods = {method.args[0]: UserFunction(method.args[0], method.args[1],
+                                                    method.args[2], env) for method in a[1]}
+            env.define(a[0], ClassValue(a[0], methods))
+        elif k == "throw":
+            raise UsagiError(self.stringify(self.evaluate(a[0], env)), n.line, code="E300")
+        elif k == "try":
+            try:
+                self.exec_block(a[0], env)
+            except UsagiError as ex:
+                handler = Environment(env)
+                handler.define(a[1], str(ex))
+                self.exec_block(a[2], handler)
         elif k == "print":
             print(*(self.stringify(self.evaluate(e, env)) for e in a[0]), file=self.stdout)
         elif k == "expr_stmt":
@@ -646,12 +800,7 @@ class Interpreter:
         if k == "name":
             return env.get(a[0], n.line)
         if k == "member":
-            module = self.evaluate(a[0], env)
-            if not isinstance(module, ModuleNamespace):
-                raise UsagiError("점(.) 접근은 import한 모듈에서만 사용할 수 있어요.", n.line)
-            if a[1] not in module.environment.values:
-                raise UsagiError(f"모듈 {module.path.name}에 정의되지 않은 이름: {a[1]}", n.line)
-            return module.environment.values[a[1]]
+            return self.read_member(self.evaluate(a[0], env), a[1], n.line)
         if k == "list":
             return [self.evaluate(e, env) for e in a[0]]
         if k == "unary":
@@ -690,29 +839,7 @@ class Interpreter:
         if k == "call":
             fn = self.evaluate(a[0], env)
             args = [self.evaluate(x, env) for x in a[1]]
-            if isinstance(fn, Builtin):
-                if len(args) < fn.minimum or (fn.maximum is not None and len(args) > fn.maximum):
-                    raise UsagiError(f"{fn.name}() 인자 수가 잘못됐어요: {len(args)}개", n.line)
-                try:
-                    return fn.fn(*args)
-                except UsagiError:
-                    raise
-                except (TypeError, ValueError, OverflowError) as ex:
-                    raise UsagiError(f"{fn.name}() 호출 오류: {ex}", n.line) from None
-            if isinstance(fn, UserFunction):
-                if len(args) != len(fn.params):
-                    raise UsagiError(f"{fn.name}()는 인자 {len(fn.params)}개가 필요해요.", n.line)
-                local = Environment(fn.closure)
-                for name, value in zip(fn.params, args):
-                    local.define(name, value)
-                try:
-                    self.exec_block(fn.body, local)
-                except ReturnFlow as ret:
-                    return ret.value
-                except (BreakFlow, ContinueFlow):
-                    raise UsagiError("함수 안의 반복문 밖에서 사쿠/푸왓을 사용할 수 없어요.", n.line) from None
-                return None
-            raise UsagiError("호출할 수 있는 함수가 아니에요.", n.line)
+            return self.call_value(fn, args, n.line)
         raise UsagiError(f"알 수 없는 식: {k}", n.line)
 
 
