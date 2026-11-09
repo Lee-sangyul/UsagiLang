@@ -11,7 +11,7 @@ def execute_usagi(source, input_text, mode):
     if mode == "check":
         try:
             Parser(tokenize(source)).parse()
-            return json.dumps({"ok":True,"output":"🐰 문법 검사 통과!"},ensure_ascii=False)
+            return json.dumps({"ok":True,"output":"문법 검사 통과!"},ensure_ascii=False)
         except UsagiError as exc:
             return json.dumps({"ok":False,"output":diagnostic(exc,source,"main.usagi")},ensure_ascii=False)
     try:
@@ -19,6 +19,8 @@ def execute_usagi(source, input_text, mode):
         runner.run(source,source_path="/home/pyodide/main.usagi")
         return json.dumps({"ok":True,"output":output.getvalue()[:150000]},ensure_ascii=False)
     except UsagiError as exc:
+        if str(exc) == "입력 스트림이 종료됐어요.":
+            return json.dumps({"ok":False,"needsInput":True,"prompt":output.getvalue()[-300:],"output":output.getvalue()[:150000]},ensure_ascii=False)
         return json.dumps({"ok":False,"output":(output.getvalue()+diagnostic(exc,source,"main.usagi"))[:150000]},ensure_ascii=False)
     except RecursionError:
         return json.dumps({"ok":False,"output":(output.getvalue()+"🐰 [E900] 재귀 호출이 너무 깊어요.")[:150000]},ensure_ascii=False)
