@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b0e16">
-<title>UsagiLang Playground 🐰</title>
+<title>UsagiLang Playground</title>
 <style>
 :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark;background:#0b0e16;color:#e9eaf1;--bg:#0b0e16;--surface:#141824;--surface2:#1b2030;--outline:#2a3042;--muted:#8d96af;--accent:#a991ff;--accent2:#6d58db}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 75% 35% at 50% -15%,#32245655,transparent),var(--bg)}
@@ -37,45 +37,45 @@ button.stop{color:#ffc6cc;background:#38212e;border-color:#5b3440}.quiet{backgro
 <body>
 <header class="topbar">
  <div class="brand"><div class="mark" aria-hidden="true">う</div><div><div class="brand-name">UsagiLang <span style="color:#a898f9">.</span></div><span class="brand-sub">Online playground</span></div></div>
- <nav class="toplinks" aria-label="상단 메뉴"><span class="top-badge">● v0.2</span><a class="hide-mobile" href="https://github.com/Lee-sangyul/UsagiLang/blob/main/COMMANDS.md" target="_blank" rel="noopener noreferrer">문법 가이드</a><a href="https://github.com/Lee-sangyul/UsagiLang" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav>
+ <nav class="toplinks" aria-label="상단 메뉴"><span class="top-badge">v0.2</span><a class="hide-mobile" href="https://github.com/Lee-sangyul/UsagiLang/blob/main/COMMANDS.md" target="_blank" rel="noopener noreferrer">문법 가이드</a><a href="https://github.com/Lee-sangyul/UsagiLang" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
 </header>
 <main class="shell">
- <div class="hero"><div><div class="eyebrow">HELLO, USAGI WORLD 🐰</div><h1>코딩도, 야하! 즐겁게.</h1><p>한글과 일본어로 쓰는 우사기어. 설치 없이 작성하고, 실행해 보세요.</p></div><div class="hero-decoration" aria-hidden="true">🐰</div></div>
+ <div class="hero"><div><div class="eyebrow">HELLO, USAGI WORLD</div><h1>코딩도, 야하! 즐겁게.</h1><p>한글과 일본어로 쓰는 우사기어. 설치 없이 작성하고, 실행해 보세요.</p></div></div>
  <div class="workspace">
   <div class="toolbar"><div class="tool-left">
-   <button id="run" class="primary" disabled>▶ 코드 실행 <span style="opacity:.7;font-size:11px">Ctrl+Enter</span></button>
-   <button id="stop" class="stop" disabled>■ 중지</button>
-   <button id="check">✓ 문법 검사</button>
+   <button id="run" class="primary" disabled>코드 실행 <span style="opacity:.7;font-size:11px">Ctrl+Enter</span></button>
+   <button id="stop" class="stop" disabled>중지</button>
+   <button id="check">문법 검사</button>
   </div><div class="tool-right">
-   <select id="examples" aria-label="예제 선택"><option value="">✦ 예제 불러오기</option><option value="hello">Hello World</option><option value="loop">반복문</option><option value="function">함수</option><option value="class">클래스</option><option value="input">입력</option></select>
-   <button id="open" class="quiet">↥ 열기</button><button id="save" class="quiet">↧ 저장</button>
-   <button id="clear" class="quiet" title="콘솔 지우기">⌫ 콘솔</button>
+   <select id="examples" aria-label="예제 선택"><option value="">예제 불러오기</option><option value="hello">Hello World</option><option value="loop">반복문</option><option value="function">함수</option><option value="class">클래스</option><option value="input">입력</option></select>
+   <button id="open" class="quiet">열기</button><button id="save" class="quiet">저장</button>
+   <button id="clear" class="quiet" title="콘솔 지우기">콘솔 지우기</button>
    <input id="file" type="file" accept=".usagi,.txt,text/plain" hidden>
   </div></div>
   <div class="editor-grid">
    <section class="editor-pane" aria-label="코드 편집기"><div class="pane-head"><div class="filetab"><span class="dot"></span> main.usagi</div><span class="kbd">UTF-8 · Usagi</span></div>
    <div class="editor-body"><div id="lines" class="lines" aria-hidden="true">1<br>2<br>3<br>4<br>5</div><textarea id="code" spellcheck="false" aria-label="우사기어 코드 편집기">푸루야 이름 = "UsagiLang"
-우라 "Hello, " + 이름 + "! 🐰"
+우라 "Hello, " + 이름 + "!"
 츠츠우라우라 i 안에 range(1, 4) {
     우라 "ヤハ!", i
 }</textarea></div>
-   <div class="editor-footer"><span>🐰 UsagiLang Language</span><span id="editor-info">5 lines · Ln 1, Col 1</span></div></section>
+   <div class="editor-footer"><span>UsagiLang Language</span><span id="editor-info">5 lines · Ln 1, Col 1</span></div></section>
    <aside class="side-pane"><section class="console-area" aria-label="실행 결과">
-     <div class="pane-head"><div class="console-title"><span class="terminal">❯_</span> OUTPUT <span style="color:#717f97;font-weight:400">/ Terminal</span></div><span class="ready" id="status" role="status" aria-live="polite">엔진 준비 중…</span></div>
-     <pre id="output" aria-live="polite">🐰 실행 엔진 로딩 중...</pre>
+     <div class="pane-head"><div class="console-title"><span class="terminal">&gt;_</span> OUTPUT <span style="color:#717f97;font-weight:400">/ Terminal</span></div><span class="ready" id="status" role="status" aria-live="polite">엔진 준비 중…</span></div>
+     <pre id="output" aria-live="polite">실행 엔진 로딩 중...</pre>
      <div class="console-footer"><span>실행 결과가 여기에 표시됩니다.</span><span>Local runtime</span></div>
-    </section><section class="input-block"><div class="pane-head"><strong>⌨ STANDARD INPUT</strong><small>한 줄에 입력값 하나</small></div><textarea id="stdin" aria-label="표준 입력" placeholder="프로그램에서 input()을 호출할 때 사용됩니다."></textarea></section>
+    </section><section class="input-block"><div class="pane-head"><strong>STANDARD INPUT</strong><small>한 줄에 입력값 하나</small></div><textarea id="stdin" aria-label="표준 입력" placeholder="프로그램에서 input()을 호출할 때 사용됩니다."></textarea></section>
    </aside>
   </div>
  </div>
- <p class="note">ⓘ 최초 실행 시 브라우저가 Python 실행 엔진을 다운로드합니다. 중지 버튼은 실행 환경을 다시 시작합니다. 로컬 파일 import 및 패키지 설치는 현재 지원하지 않습니다.</p>
- <footer class="bottom"><span>Made with ♡ for UsagiLang · 비공식 팬 프로젝트</span><span>Powered by Pyodide · <a href="https://github.com/Lee-sangyul/UsagiLang" rel="noopener noreferrer">Open Source ↗</a></span></footer>
+ <p class="note">참고: 최초 실행 시 브라우저가 Python 실행 엔진을 다운로드합니다. 중지 버튼은 실행 환경을 다시 시작합니다. 로컬 파일 import 및 패키지 설치는 현재 지원하지 않습니다.</p>
+ <footer class="bottom"><span>Made for UsagiLang · 비공식 팬 프로젝트</span><span>Powered by Pyodide · <a href="https://github.com/Lee-sangyul/UsagiLang" rel="noopener noreferrer">Open Source</a></span></footer>
 </main>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
 const samples={
- hello:'우라 "Hello, World! 🐰"',
+ hello:'우라 "Hello, World!"',
  loop:'푸루야 count = 0\n푸루루루 count < 5 {\n    우라 "ヤハ!", count\n    count = count + 1\n}',
  function:'우라라야하 add(a, b) {\n    우라라라 a + b\n}\n우라 "결과:", add(20, 22)',
  class:'클래스 Box {\n    우라라야하 init(self, value) { self.value = value }\n}\n푸루야 box = Box(42)\n우라 box.value',
@@ -90,20 +90,20 @@ function boot(){
  if(worker)worker.terminate();
  worker=new Worker("./runner-worker.js");
  worker.onmessage=({data:m})=>{
-  if(m.type==="ready"){ready=true;status("준비 완료");out.textContent="🐰 준비 완료! 실행 버튼을 눌러보세요.";controls()}
+  if(m.type==="ready"){ready=true;status("준비 완료");out.textContent="준비 완료. 실행 버튼을 눌러보세요.";controls()}
   if(m.type==="fatal"){ready=false;running=false;status("로딩 실패");out.textContent="엔진 로딩 실패: "+m.error;controls()}
-  if(m.type==="result"&&m.id===pending){running=false;status(m.ok?"실행 완료":"실행 오류");out.textContent=m.output|| (m.ok?"✓ 완료 (출력 없음)":"오류");controls()}
+  if(m.type==="result"&&m.id===pending){running=false;status(m.ok?"실행 완료":"실행 오류");out.textContent=m.output|| (m.ok?"완료 (출력 없음)":"오류");controls()}
  };
  worker.onerror=e=>{ready=false;running=false;status("엔진 오류");out.textContent="작업자 오류: "+e.message;controls()};
 }
 function execute(mode){
  if(!ready||running)return;
  running=true;pending=++seq;controls();status(mode==="check"?"검사 중…":"실행 중…");
- out.textContent="⏳ "+(mode==="check"?"문법 검사":"코드 실행")+" 중...";
+ out.textContent=""+(mode==="check"?"문법 검사":"코드 실행")+" 중...";
  worker.postMessage({type:"execute",id:pending,mode,source:code.value,input:$("stdin").value});
 }
 $("run").onclick=()=>execute("run");$("check").onclick=()=>execute("check");
-$("stop").onclick=()=>{if(!running)return;boot();out.textContent="■ 사용자가 실행을 중지했습니다. 엔진을 다시 준비합니다."};
+$("stop").onclick=()=>{if(!running)return;boot();out.textContent="사용자가 실행을 중지했습니다. 엔진을 다시 준비합니다."};
 $("clear").onclick=()=>{out.textContent=""};
 $("examples").onchange=e=>{if(samples[e.target.value])code.value=samples[e.target.value];e.target.value=""};
 $("save").onclick=()=>{const a=document.createElement("a"),url=URL.createObjectURL(new Blob([code.value],{type:"text/plain;charset=utf-8"}));a.href=url;a.download="main.usagi";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
