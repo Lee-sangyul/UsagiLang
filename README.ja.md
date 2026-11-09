@@ -76,36 +76,36 @@ REPL は複数行入力に対応し、`:help` / `:reset` / `:exit` が使えま�
 ## 📖 コマンド一覧
 
 日本語と韓国語の表記は同じ機能を持ち、1つのファイル内で混在させられます。
-英語が分かる方にも使いやすいよう、各コマンドに英語名と短い英語の説明を追加しました。
+以前いただいたご提案をもとに、英語の意味をキーワードと同じ列にまとめて、スマートフォンでも読みやすい表にしました。
 
-| 機能 | 日本語キーワード | 韓国語の別名 | English | Short description (EN) |
-|---|---|---|---|---|
-| 変数宣言 | `プルャ` | `푸루야` | Variable declaration | Declare a new variable. |
-| 出力 | `ウラ` | `우라` | Output | Print one or more values. |
-| 入力 | `ハァヤハウラ` | `하아야하우라`, `하이야하우나` | Input | Read a line of user input. |
-| 真（true） | `ヤハ` | `야하` | True | Boolean true value. |
-| 偽（false） | `ウーラーヤハヤハ` | `우라야하야하`, `우나야하야하` | False | Boolean false value. |
-| 条件分岐 | `ハァ` | `하아` | If | Run code when a condition is true. |
-| else | `フゥン` | `후웅` | Else | Run code when the if condition is false. |
-| while ループ | `プルルルル` | `푸루루루루`, `푸루루루` | While | Repeat while a condition is true. |
-| for ループ | `ツツウラウラ` | `츠츠우라우라` | For | Iterate over items in a sequence. |
-| 関数宣言 | `ウララヤハ` | `우라라야하` | Function | Define a function. |
-| return | `ウラララ` | `우라라라` | Return | Return a value from a function. |
-| break | `サクッ` | `사쿠` | Break | Exit the current loop. |
-| continue | `プワッ` | `푸왓` | Continue | Skip to the next loop iteration. |
-| for の in | `ウラウラ` | `우라우라` | In | Specify a sequence to iterate over. |
-| 論理 AND | `ウルウル` | `우루우루` | Logical AND | True when both conditions are true. |
-| 論理 OR | `ヤハヤハ` | `야하야하` | Logical OR | True when at least one condition is true. |
-| 論理 NOT | `イヤハ` | `이야하` | Logical NOT | Reverse a boolean condition. |
-| 値なし | `ナイナイ` | `나이나이` | None | Represent the absence of a value. |
-| モジュールの読み込み | `ハイ` | `하이` | Import | Load a local UsagiLang module. |
-| 別名指定 | `ウララ` | `우라라` | Alias | Give an imported module a name. |
-| クラス宣言 | `class`, `クラス` | `클래스` | Class | Define a class. |
-| try | `プルップラッ` | `푸룻푸랏` | Try | Start a block that may raise an error. |
-| catch | `ウギッ` | `우깃` | Catch | Handle a raised language error. |
-| throw | `throw`, `なげる` | `던지기` | Throw | Raise a language error. |
+| 機能 | コマンド（日本語 / 한국어 / English） |
+|---|---|
+| 変数宣言 | `プルャ` / `푸루야` (Variable declaration) |
+| 出力 | `ウラ` / `우라` (Output) |
+| 入力 | `ハァヤハウラ` / `하아야하우라`, `하이야하우나` (Input) |
+| 真（true） | `ヤハ` / `야하` (True) |
+| 偽（false） | `ウーラーヤハヤハ` / `우라야하야하`, `우나야하야하` (False) |
+| 条件分岐 | `ハァ` / `하아` (If) |
+| else | `フゥン` / `후웅` (Else) |
+| while ループ | `プルルルル` / `푸루루루루`, `푸루루루` (While) |
+| for ループ | `ツツウラウラ` / `츠츠우라우라` (For) |
+| 関数宣言 | `ウララヤハ` / `우라라야하` (Function) |
+| return | `ウラララ` / `우라라라` (Return) |
+| break | `サクッ` / `사쿠` (Break) |
+| continue | `プワッ` / `푸왓` (Continue) |
+| for の in | `ウラウラ` / `우라우라` (In) |
+| 論理 AND | `ウルウル` / `우루우루` (Logical AND) |
+| 論理 OR | `ヤハヤハ` / `야하야하` (Logical OR) |
+| 論理 NOT | `イヤハ` / `이야하` (Logical NOT) |
+| 値なし | `ナイナイ` / `나이나이` (None) |
+| モジュールの読み込み | `ハイ` / `하이` (Import) |
+| 別名指定 | `ウララ` / `우라라` (Alias) |
+| クラス宣言 | `class`, `クラス` / `클래스` (Class) |
+| try | `プルップラッ` / `푸룻푸랏` (Try) |
+| catch | `ウギッ` / `우깃` (Catch) |
+| throw | `throw`, `なげる` / `던지기` (Throw) |
 
-※ **English / Short description (EN)** はコマンドの意味を説明するためのものです。英語名がすべて新しい構文として使えるという意味ではありません。
+※ 括弧内の英語は**意味を説明するための名称**です。すべてが実行できる英語の別名というわけではありません。
 
 **v0.3 で追加した表記が推奨構文です。** `in`、`and`、`or`、`not`、`ナシ`、`import`、`as`、`try`、`catch` などの旧表記と韓国語・日本語の既存別名も引き続き利用できます。`フゥン`（else）と `throw` / `なげる` は変更していません。値なしを出力すると `ナイナイ` と表示されます。
 
