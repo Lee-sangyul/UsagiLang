@@ -29,7 +29,8 @@ jobs:
           cp docs/playground/runner-worker.js _site/runner-worker.js
           cp usagilang.py _site/usagilang.py
           touch _site/.nojekyll
-      - uses: actions/configure-pages@v5
+      # Avoid the configure-pages API lookup, which returns HTTP 404 on this repository.
+      # The Pages site must already be enabled with GitHub Actions as its source.
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
