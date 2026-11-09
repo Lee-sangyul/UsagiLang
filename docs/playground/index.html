@@ -105,10 +105,10 @@ function boot(){
   if(m.type==="fatal"){ready=false;running=false;status("로딩 실패");out.textContent="엔진 로딩 실패: "+m.error;controls()}
   if(m.type==="result"&&m.id===pending){
    if(m.needsInput){
-    if(requestCount>=20){running=false;status("입력 제한 초과");out.textContent=(m.output||"")+"\\n최대 20회의 대화형 입력만 허용됩니다.";controls();return}
+    if(requestCount>=20){running=false;status("입력 제한 초과");out.textContent=(m.output||"")+"\n최대 20회의 대화형 입력만 허용됩니다.";controls();return}
     requestCount++;
-    $("input-question").textContent=(m.prompt||"").trim().split("\\n").pop()||"프로그램 입력값을 입력하세요.";
-    out.textContent=(m.output||"")+"\\n입력을 기다리는 중...";
+    $("input-question").textContent=(m.prompt||"").trim().split("\n").pop()||"프로그램 입력값을 입력하세요.";
+    out.textContent=(m.output||"")+"\n입력을 기다리는 중...";
     status("입력 대기 중");$("input-request").hidden=false;$("live-answer").value="";$("live-answer").focus();return;
    }
    $("input-request").hidden=true;running=false;status(m.ok?"실행 완료":"실행 오류");out.textContent=m.output|| (m.ok?"완료 (출력 없음)":"오류");controls();
@@ -124,14 +124,14 @@ function execute(mode){
  if(!ready||running)return;
  activeSource=code.value;activeMode=mode;requestCount=0;
  const preset=$("stdin").value;
- inputLines=preset? [preset.endsWith("\\n")?preset:preset+"\\n"]:[];
+ inputLines=preset? [preset.endsWith("\n")?preset:preset+"\n"]:[];
  running=true;controls();status(mode==="check"?"검사 중…":"실행 중…");
  out.textContent=(mode==="check"?"문법 검사":"코드 실행")+" 중...";
  sendExecution();
 }
 $("input-request").addEventListener("submit",e=>{
  e.preventDefault();if(!running||!ready)return;
- inputLines.push($("live-answer").value+"\\n");
+ inputLines.push($("live-answer").value+"\n");
  $("input-request").hidden=true;status("실행 중…");out.textContent="코드 실행 중...";
  sendExecution();
 });
