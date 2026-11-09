@@ -551,7 +551,7 @@ class Interpreter:
         if value is False:
             return "ウーラーヤハヤハ"
         if value is None:
-            return "ナシ"
+            return "ナイナイ"
         if isinstance(value, list):
             return "[" + ", ".join(Interpreter.stringify(v) for v in value) + "]"
         if isinstance(value, InstanceValue):
