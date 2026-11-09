@@ -12,34 +12,37 @@
 
 ## 키워드
 
-| 토큰 | 일본어 | 한국어 | 역할 | English | Short description (EN) |
-|---|---|---|---|---|---|
-| LET | `プルャ` | `푸루야` | 새 변수 정의 | Variable declaration | Declare a new variable. |
-| PRINT | `ウラ` | `우라` | 출력문 | Output | Print one or more values. |
-| INPUT | `ハァヤハウラ` | `하아야하우라`, `하이야하우나` | 문자열 입력 함수 | Input | Read a line of user input. |
-| TRUE | `ヤハ` | `야하` | 참 | True | Boolean true value. |
-| FALSE | `ウーラーヤハヤハ` | `우라야하야하`, `우나야하야하` | 거짓 | False | Boolean false value. |
-| IF | `ハァ` | `하아` | 조건식 | If | Run code when a condition is true. |
-| ELSE | `フゥン` | `후웅` | 조건문의 반대 분기 | Else | Run code when the if condition is false. |
-| WHILE | `プルルルル` | `푸루루루루`, `푸루루루` | 조건 반복 | While | Repeat while a condition is true. |
-| FOR | `ツツウラウラ` | `츠츠우라우라` | 순회 반복 | For | Iterate over items in a sequence. |
-| FUNC | `ウララヤハ` | `우라라야하` | 함수 선언 | Function | Define a function. |
-| RETURN | `ウラララ` | `우라라라` | 함수 반환 | Return | Return a value from a function. |
-| BREAK | `サクッ` | `사쿠` | 현재 반복 중지 | Break | Exit the current loop. |
-| CONTINUE | `プワッ` | `푸왓` | 다음 반복으로 진행 | Continue | Skip to the next loop iteration. |
-| IN | `ウラウラ` | `우라우라` | 순회 대상 지정 | In | Specify a sequence to iterate over. |
-| AND | `ウルウル` | `우루우루` | 논리곱 | Logical AND | True when both conditions are true. |
-| OR | `ヤハヤハ` | `야하야하` | 논리합 | Logical OR | True when at least one condition is true. |
-| NOT | `イヤハ` | `이야하` | 논리 부정 | Logical NOT | Reverse a boolean condition. |
-| NONE | `ナイナイ` | `나이나이` | 값 없음 | None | Represent the absence of a value. |
-| IMPORT | `ハイ` | `하이` | 모듈 불러오기 | Import | Load a local UsagiLang module. |
-| AS | `ウララ` | `우라라` | 모듈 이름 붙이기 | Alias | Give an imported module a name. |
-| CLASS | `class`, `クラス` | `클래스` | 클래스 선언 | Class | Define a class. |
-| TRY | `プルップラッ` | `푸룻푸랏` | 예외 처리 시작 | Try | Start a block that may raise an error. |
-| CATCH | `ウギッ` | `우깃` | 예외 포착 | Catch | Handle a raised language error. |
-| THROW | `throw`, `なげる` | `던지기` | 예외 발생 | Throw | Raise a language error. |
+일본어·한국어 키워드와 영어 기능명을 한 열에 모았습니다. 자세한 의미는 오른쪽 역할 열에서 확인할 수 있어요.
 
-**참고:** 영어 열은 의미 설명이며, 모든 영어 이름이 실행 가능한 공식 키워드라는 뜻은 아닙니다.
+| 토큰 | 명령어 (日本語 / 한국어 / English) | 역할 |
+|---|---|---|
+| LET | `プルャ` / `푸루야` (Variable declaration) | 새 변수 정의 |
+| PRINT | `ウラ` / `우라` (Output) | 출력문 |
+| INPUT | `ハァヤハウラ` / `하아야하우라`, `하이야하우나` (Input) | 문자열 입력 함수 |
+| TRUE | `ヤハ` / `야하` (True) | 참 |
+| FALSE | `ウーラーヤハヤハ` / `우라야하야하`, `우나야하야하` (False) | 거짓 |
+| IF | `ハァ` / `하아` (If) | 조건식 |
+| ELSE | `フゥン` / `후웅` (Else) | 조건문의 반대 분기 |
+| WHILE | `プルルルル` / `푸루루루루`, `푸루루루` (While) | 조건 반복 |
+| FOR | `ツツウラウラ` / `츠츠우라우라` (For) | 순회 반복 |
+| FUNC | `ウララヤハ` / `우라라야하` (Function) | 함수 선언 |
+| RETURN | `ウラララ` / `우라라라` (Return) | 함수 반환 |
+| BREAK | `サクッ` / `사쿠` (Break) | 현재 반복 중지 |
+| CONTINUE | `プワッ` / `푸왓` (Continue) | 다음 반복으로 진행 |
+| IN | `ウラウラ` / `우라우라` (In) | 순회 대상 지정 |
+| AND | `ウルウル` / `우루우루` (Logical AND) | 논리곱 |
+| OR | `ヤハヤハ` / `야하야하` (Logical OR) | 논리합 |
+| NOT | `イヤハ` / `이야하` (Logical NOT) | 논리 부정 |
+| NONE | `ナイナイ` / `나이나이` (None) | 값 없음 |
+| IMPORT | `ハイ` / `하이` (Import) | 모듈 불러오기 |
+| AS | `ウララ` / `우라라` (Alias) | 모듈 이름 붙이기 |
+| CLASS | `class`, `クラス` / `클래스` (Class) | 클래스 선언 |
+| TRY | `プルップラッ` / `푸룻푸랏` (Try) | 예외 처리 시작 |
+| CATCH | `ウギッ` / `우깃` (Catch) | 예외 포착 |
+| THROW | `throw`, `なげる` / `던지기` (Throw) | 예외 발생 |
+
+**참고:** 괄호 안 영어 표현은 뜻을 설명하는 이름으로, 영어 이름 모두가 새로운 실행 문법이라는 의미는 아닙니다.
+
 
 기존 v0.2 명령어(`in`, `and`, `or`, `not`, `import`, `as`, `try`, `catch`, `ナシ` 및 기존 별칭)는 하위 호환을 위해 그대로 지원합니다. `フゥン`은 else로 유지하며 `throw`도 기존과 동일합니다.
 
