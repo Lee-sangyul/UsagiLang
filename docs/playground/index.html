@@ -37,7 +37,7 @@ button.stop{color:#ffc6cc;background:#38212e;border-color:#5b3440}.quiet{backgro
 <body>
 <header class="topbar">
  <div class="brand"><div class="mark" aria-hidden="true">う</div><div><div class="brand-name">UsagiLang <span style="color:#a898f9">.</span></div><span class="brand-sub">Online playground</span></div></div>
- <nav class="toplinks" aria-label="상단 메뉴"><span class="top-badge">v0.2</span><a class="hide-mobile" href="https://github.com/Lee-sangyul/UsagiLang/blob/main/COMMANDS.md" target="_blank" rel="noopener noreferrer">문법 가이드</a><a href="https://github.com/Lee-sangyul/UsagiLang" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
+ <nav class="toplinks" aria-label="상단 메뉴"><span class="top-badge">v0.3</span><a class="hide-mobile" href="https://github.com/Lee-sangyul/UsagiLang/blob/main/COMMANDS.md" target="_blank" rel="noopener noreferrer">문법 가이드</a><a href="https://github.com/Lee-sangyul/UsagiLang" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
 </header>
 <main class="shell">
  <div class="hero"><div><div class="eyebrow">HELLO, USAGI WORLD</div><h1>코딩도, 야하! 즐겁게.</h1><p>한글과 일본어로 쓰는 우사기어. 설치 없이 작성하고, 실행해 보세요.</p></div></div>
@@ -47,7 +47,7 @@ button.stop{color:#ffc6cc;background:#38212e;border-color:#5b3440}.quiet{backgro
    <button id="stop" class="stop" disabled>중지</button>
    <button id="check">문법 검사</button>
   </div><div class="tool-right">
-   <select id="examples" aria-label="예제 선택"><option value="">예제 불러오기</option><option value="hello">Hello World</option><option value="loop">반복문</option><option value="function">함수</option><option value="class">클래스</option><option value="input">입력</option></select>
+   <select id="examples" aria-label="예제 선택"><option value="">예제 불러오기</option><option value="hello">Hello World</option><option value="loop">반복문</option><option value="function">함수</option><option value="class">클래스</option><option value="input">입력</option><option value="exception">예외 처리 v0.3</option><option value="logic">논리 연산 v0.3</option></select>
    <button id="open" class="quiet">열기</button><button id="save" class="quiet">저장</button>
    <button id="clear" class="quiet" title="콘솔 지우기">콘솔 지우기</button>
    <input id="file" type="file" accept=".usagi,.txt,text/plain" hidden>
@@ -56,7 +56,7 @@ button.stop{color:#ffc6cc;background:#38212e;border-color:#5b3440}.quiet{backgro
    <section class="editor-pane" aria-label="코드 편집기"><div class="pane-head"><div class="filetab"><span class="dot"></span> main.usagi</div><span class="kbd">UTF-8 · Usagi</span></div>
    <div class="editor-body"><div id="lines" class="lines" aria-hidden="true">1<br>2<br>3<br>4<br>5</div><textarea id="code" spellcheck="false" aria-label="우사기어 코드 편집기">푸루야 이름 = "UsagiLang"
 우라 "Hello, " + 이름 + "!"
-츠츠우라우라 i 안에 range(1, 4) {
+츠츠우라우라 i 우라우라 range(1, 4) {
     우라 "ヤハ!", i
 }</textarea></div>
    <div class="editor-footer"><span>UsagiLang Language</span><span id="editor-info">5 lines · Ln 1, Col 1</span></div></section>
@@ -79,7 +79,9 @@ const samples={
  loop:'푸루야 count = 0\n푸루루루 count < 5 {\n    우라 "ヤハ!", count\n    count = count + 1\n}',
  function:'우라라야하 add(a, b) {\n    우라라라 a + b\n}\n우라 "결과:", add(20, 22)',
  class:'클래스 Box {\n    우라라야하 init(self, value) { self.value = value }\n}\n푸루야 box = Box(42)\n우라 box.value',
- input:'푸루야 name = 하이야하우나("이름: ")\n우라 "안녕, " + name'
+ input:'푸루야 name = 하이야하우나("이름: ")\n우라 "안녕, " + name',
+ exception:'푸룻푸랏 {\n    던지기 "문제 발생"\n} 우깃 err {\n    우라 "오류:", err\n}',
+ logic:'푸루야 x = 2\n하아 x > 1 우루우루 이야하 (x == 3) {\n    우라 "조건 통과"\n}'
 };
 let worker=null,ready=false,running=false,seq=0,pending=0;
 const code=$("code"),out=$("output");
