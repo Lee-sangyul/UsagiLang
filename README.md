@@ -62,31 +62,36 @@ Windows에서는 환경에 따라 `python` 대신 `py`를 사용하세요.
 
 ## 명령어 사전
 
-| 기능 | 일본어 | 한국어 별칭 |
-|---|---|---|
-| 변수 선언 | `プルャ` | `푸루야` |
-| 화면 출력 | `ウラ` | `우라` |
-| 입력 | `ハァヤハウラ` | `하아야하우라`, `하이야하우나` |
-| 참 | `ヤハ` | `야하` |
-| 거짓 | `ウーラーヤハヤハ` | `우라야하야하`, `우나야하야하` |
-| 조건 | `ハァ` | `하아` |
-| 그 외 | `フゥン` | `후웅` |
-| 조건 반복 | `プルルルル` | `푸루루루루`, `푸루루루` |
-| 순회 반복 | `ツツウラウラ` | `츠츠우라우라` |
-| 함수 선언 | `ウララヤハ` | `우라라야하` |
-| 반환 | `ウラララ` | `우라라라` |
-| 반복 종료 | `サクッ` | `사쿠` |
-| 다음 반복 | `プワッ` | `푸왓` |
-| 순회 키워드 | `ウラウラ` | `우라우라` |
-| 그리고 | `ウルウル` | `우루우루` |
-| 또는 | `ヤハヤハ` | `야하야하` |
-| 부정 | `イヤハ` | `이야하` |
-| 값 없음 | `ナイナイ` | `나이나이` |
-| 모듈 가져오기 | `ハイ` | `하이` |
-| 모듈 이름 지정 | `ウララ` | `우라라` |
+해외 개발자도 명령어를 이해할 수 있도록 영어 기능명과 짧은 영어 설명을 추가했습니다.
 
-| 예외 처리 시작 | `プルップラッ` | `푸룻푸랏` |
-| 예외 포착 | `ウギッ` | `우깃` |
+| 기능 | 일본어 | 한국어 별칭 | English | Short description (EN) |
+|---|---|---|---|---|
+| 변수 선언 | `プルャ` | `푸루야` | Variable declaration | Declare a new variable. |
+| 화면 출력 | `ウラ` | `우라` | Output | Print one or more values. |
+| 입력 | `ハァヤハウラ` | `하아야하우라`, `하이야하우나` | Input | Read a line of user input. |
+| 참 | `ヤハ` | `야하` | True | Boolean true value. |
+| 거짓 | `ウーラーヤハヤハ` | `우라야하야하`, `우나야하야하` | False | Boolean false value. |
+| 조건 | `ハァ` | `하아` | If | Run code when a condition is true. |
+| 그 외 | `フゥン` | `후웅` | Else | Run code when the if condition is false. |
+| 조건 반복 | `プルルルル` | `푸루루루루`, `푸루루루` | While | Repeat while a condition is true. |
+| 순회 반복 | `ツツウラウラ` | `츠츠우라우라` | For | Iterate over items in a sequence. |
+| 함수 선언 | `ウララヤハ` | `우라라야하` | Function | Define a function. |
+| 반환 | `ウラララ` | `우라라라` | Return | Return a value from a function. |
+| 반복 종료 | `サクッ` | `사쿠` | Break | Exit the current loop. |
+| 다음 반복 | `プワッ` | `푸왓` | Continue | Skip to the next loop iteration. |
+| 순회 키워드 | `ウラウラ` | `우라우라` | In | Specify a sequence to iterate over. |
+| 그리고 | `ウルウル` | `우루우루` | Logical AND | True when both conditions are true. |
+| 또는 | `ヤハヤハ` | `야하야하` | Logical OR | True when at least one condition is true. |
+| 부정 | `イヤハ` | `이야하` | Logical NOT | Reverse a boolean condition. |
+| 값 없음 | `ナイナイ` | `나이나이` | None | Represent the absence of a value. |
+| 모듈 가져오기 | `ハイ` | `하이` | Import | Load a local UsagiLang module. |
+| 모듈 이름 지정 | `ウララ` | `우라라` | Alias | Give an imported module a name. |
+| 클래스 선언 | `class`, `クラス` | `클래스` | Class | Define a class. |
+| 예외 처리 시작 | `プルップラッ` | `푸룻푸랏` | Try | Start a block that may raise an error. |
+| 예외 포착 | `ウギッ` | `우깃` | Catch | Handle a raised language error. |
+| 예외 발생 | `throw`, `なげる` | `던지기` | Throw | Raise a language error. |
+
+영어 열은 명령어의 의미를 설명하는 것이며, 영어 이름이 모두 새로운 실행 문법이라는 뜻은 아닙니다.
 
 v0.3부터 위 표기를 권장합니다. 기존 영어 및 한국어 별칭은 호환용으로 유지됩니다. `throw`와 `else` 명령어는 변경하지 않았습니다.
 
