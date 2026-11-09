@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""UsagiLang v0.1 — 비공식 우사기어 기반 교육용 인터프리터 (Python 3.10+).
+"""UsagiLang v0.3 — 비공식 우사기어 기반 교육용 인터프리터 (Python 3.10+).
 
 사용법: python usagilang.py examples/hello.usagi
         python usagilang.py -c 'ウラ "야하!"'
@@ -34,15 +34,24 @@ KEYWORDS = {
     "プワッ": "CONTINUE", "푸왓": "CONTINUE",
     "ウララヤハ": "FUNC", "우라라야하": "FUNC",
     "func": "FUNC", "return": "RETURN",
+    "ウラウラ": "IN", "우라우라": "IN",
     "in": "IN", "안에": "IN",
+    "ウルウル": "AND", "우루우루": "AND",
     "and": "AND", "그리고": "AND",
+    "ヤハヤハ": "OR", "야하야하": "OR",
     "or": "OR", "또는": "OR",
+    "イヤハ": "NOT", "이야하": "NOT",
     "not": "NOT", "아님": "NOT",
+    "ナイナイ": "NONE", "나이나이": "NONE",
     "ナシ": "NONE", "없음": "NONE", "null": "NONE",
+    "ハイ": "IMPORT", "하이": "IMPORT",
     "import": "IMPORT", "가져와": "IMPORT", "インポート": "IMPORT",
+    "ウララ": "AS", "우라라": "AS",
     "as": "AS", "별칭": "AS", "として": "AS",
     "class": "CLASS", "클래스": "CLASS", "クラス": "CLASS",
+    "プルップラッ": "TRY", "푸룻푸랏": "TRY",
     "try": "TRY", "시도": "TRY", "ためす": "TRY",
+    "ウギッ": "CATCH", "우깃": "CATCH",
     "catch": "CATCH", "잡기": "CATCH", "つかまえる": "CATCH",
     "throw": "THROW", "던지기": "THROW", "なげる": "THROW",
 }
@@ -895,7 +904,7 @@ def repl_loop(stdin: TextIO | None = None, stdout: TextIO | None = None,
     writer = stdout if stdout is not None else sys.stdout
     errors = stderr if stderr is not None else sys.stderr
     runner = Interpreter(stdin=reader, stdout=writer, max_steps=max_steps)
-    print("🐰 UsagiLang REPL v0.2 (:help, :reset, :exit)", file=writer)
+    print("🐰 UsagiLang REPL v0.3 (:help, :reset, :exit)", file=writer)
     pending: list[str] = []
     while True:
         writer.write("... " if pending else ">>> ")
@@ -942,7 +951,7 @@ def main(argv: list[str] | None = None) -> int:
 
     command_name = arguments.pop(0) if arguments and arguments[0] in ("run", "check", "repl") else "run"
     cli = argparse.ArgumentParser(
-        description="UsagiLang v0.2 🐰 (run / check / repl / pkg)"
+        description="UsagiLang v0.3 (run / check / repl / pkg)"
     )
     if command_name != "repl":
         cli.add_argument("file", nargs="?", help="실행하거나 검사할 .usagi 파일")
