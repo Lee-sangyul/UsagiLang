@@ -77,7 +77,7 @@ button.stop{color:#ffc6cc;background:#38212e;border-color:#5b3440}.quiet{backgro
    </aside>
   </div>
  </div>
- <p class="note">참고: 최초 실행 시 브라우저가 Python 실행 엔진을 다운로드합니다. 중지 버튼은 실행 환경을 다시 시작합니다. 로컬 파일 import 및 패키지 설치는 현재 지원하지 않습니다.</p>
+ <p class="note">Build: 2026-11-09-input-echo-2 · 참고: 최초 실행 시 브라우저가 Python 실행 엔진을 다운로드합니다. 중지 버튼은 실행 환경을 다시 시작합니다. 로컬 파일 import 및 패키지 설치는 현재 지원하지 않습니다.</p>
  <footer class="bottom"><span>Made for UsagiLang · 비공식 팬 프로젝트</span><span>Powered by Pyodide · <a href="https://github.com/Lee-sangyul/UsagiLang" rel="noopener noreferrer">Open Source</a></span></footer>
 </main>
 <script>
@@ -99,7 +99,7 @@ function controls(){ $("run").disabled=!ready||running;$("check").disabled=!read
 function boot(){
  ready=false;running=false;controls();$("input-request").hidden=true;status("엔진 준비 중…");
  if(worker)worker.terminate();
- worker=new Worker("./runner-worker.js");
+ worker=new Worker("./runner-worker.js?v=20261109-input-echo-2");
  worker.onmessage=({data:m})=>{
   if(m.type==="ready"){ready=true;status("준비 완료");out.textContent="준비 완료. 실행 버튼을 눌러보세요.";controls()}
   if(m.type==="fatal"){ready=false;running=false;status("로딩 실패");out.textContent="엔진 로딩 실패: "+m.error;controls()}
