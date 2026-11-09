@@ -41,7 +41,7 @@ class V03KeywordsTests(unittest.TestCase):
 하아 total == 2 야하야하 우나야하야하 { 우라 total }
 우라 나이나이
 """
-        self.assertEqual(self.execute(source), "2\nナシ\n")
+        self.assertEqual(self.execute(source), "2\nナイナイ\n")
 
     def test_japanese_logic(self):
         source = 'ハァ ヤハ ウルウル イヤハ ウーラーヤハヤハ { ウラ "OK" }'
@@ -59,8 +59,6 @@ class V03KeywordsTests(unittest.TestCase):
             self.assertEqual(self.execute('하이 "lib.usagi" 우라라 module\n우라 module.answer', main), "42\n")
 
     def test_legacy_syntax_still_works(self):
-        source = 'try { throw "old" } catch e { print(e) }'
-        # 'print' is not a keyword; ensure legacy PRINT spelling remains usable.
         source = 'try { throw "old" } catch e { ウラ e }'
         self.assertEqual(self.execute(source), "old\n")
         self.assertEqual(self.execute('츠츠우라우라 x in [1] { 우라 x }'), "1\n")
