@@ -6,6 +6,19 @@ const python=String.raw`
 import io,sys,json
 from usagilang import Interpreter,Parser,tokenize,UsagiError,diagnostic
 
+class ConsoleInput(io.StringIO):
+    """Echo the submitted stdin into the output, like a terminal."""
+    def __init__(self, text, output):
+        super().__init__(text)
+        self.output = output
+
+    def readline(self, *args, **kwargs):
+        line = super().readline(*args, **kwargs)
+        if line:
+            self.output.write(line if line.endswith("\n") else line + "\n")
+        return line
+
+
 def execute_usagi(source, input_text, mode):
     output=io.StringIO()
     if mode == "check":
@@ -15,7 +28,7 @@ def execute_usagi(source, input_text, mode):
         except UsagiError as exc:
             return json.dumps({"ok":False,"output":diagnostic(exc,source,"main.usagi")},ensure_ascii=False)
     try:
-        runner=Interpreter(stdin=io.StringIO(input_text + ("\n" if input_text and not input_text.endswith("\n") else "")),stdout=output,max_steps=20000)
+        runner=Interpreter(stdin=ConsoleInput(input_text + ("\n" if input_text and not input_text.endswith("\n") else ""), output),stdout=output,max_steps=20000)
         runner.run(source,source_path="/home/pyodide/main.usagi")
         return json.dumps({"ok":True,"output":output.getvalue()[:150000]},ensure_ascii=False)
     except UsagiError as exc:
