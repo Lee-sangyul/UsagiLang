@@ -1,4 +1,4 @@
-# 🐰 UsagiLang v0.2.0-alpha (development)
+# UsagiLang v0.3.0-alpha (development)
 
 [🇯🇵 日本語版 README](README.ja.md) | English / 한국어
 
@@ -20,7 +20,7 @@ python usagilang.py -c '우라 "Hello, World!"'
 
 **Features:** Japanese/Korean keywords · variables · mutable lists · classes · exceptions · import · REPL · math/text/random/clock · offline package manager · VS Code extension source · no third-party runtime dependencies.
 
-**Latest tagged release:** `v0.1.0-alpha` · **Development:** `v0.2.0-alpha` · **License:** MIT (original code and documentation only) · **Python:** 3.10+
+**Latest tagged release:** `v0.1.0-alpha` · **Development:** `v0.3.0-alpha` · **License:** MIT (original code and documentation only) · **Python:** 3.10+
 
 - [v0.2 개발 기능 안내](docs/V02_FEATURES.md)
 - [Language commands](COMMANDS.md)
@@ -38,7 +38,7 @@ python usagilang.py -c '우라 "Hello, World!"'
 
 ## 바로 실행
 
-아래 명령은 프로젝트 루트에서 실행합니다. `v0.2.0-alpha`는 개발 브랜치 기능이므로 공식 배포 버전과 다를 수 있습니다.
+아래 명령은 프로젝트 루트에서 실행합니다. `v0.3.0-alpha`는 개발판 기능이므로 공식 배포 버전과 다를 수 있습니다.
 
 ```bash
 python -m pip install -e .
@@ -77,13 +77,18 @@ Windows에서는 환경에 따라 `python` 대신 `py`를 사용하세요.
 | 반환 | `ウラララ` | `우라라라` |
 | 반복 종료 | `サクッ` | `사쿠` |
 | 다음 반복 | `プワッ` | `푸왓` |
-| 순회 키워드 | `in` | `안에` |
-| 그리고 | `and`, `&&` | `그리고` |
-| 또는 | `or`, `||` | `또는` |
-| 부정 | `not`, `!` | `아님` |
-| 값 없음 | `ナシ`, `null` | `없음` |
-| 모듈 가져오기 | `import`, `インポート` | `가져와` |
-| 모듈 이름 지정 | `as`, `として` | `별칭` |
+| 순회 키워드 | `ウラウラ` | `우라우라` |
+| 그리고 | `ウルウル` | `우루우루` |
+| 또는 | `ヤハヤハ` | `야하야하` |
+| 부정 | `イヤハ` | `이야하` |
+| 값 없음 | `ナイナイ` | `나이나이` |
+| 모듈 가져오기 | `ハイ` | `하이` |
+| 모듈 이름 지정 | `ウララ` | `우라라` |
+
+| 예외 처리 시작 | `プルップラッ` | `푸룻푸랏` |
+| 예외 포착 | `ウギッ` | `우깃` |
+
+v0.3부터 위 표기를 권장합니다. 기존 영어 및 한국어 별칭은 호환용으로 유지됩니다. `throw`와 `else` 명령어는 변경하지 않았습니다.
 
 ## 문법
 
@@ -92,10 +97,10 @@ Windows에서는 환경에 따라 `python` 대신 `py`를 사용하세요.
 - 변수 선언: `푸루야 x = 10`, 변경: `x = x + 1`.
 - 출력: `우라 "안녕", x` (공백으로 연결). 입력: `하이야하우나("질문: ")`.
 - 자료형: 정수, 실수, 문자열, 참/거짓, 리스트, 없음.
-- 연산: `+ - * / %`, 비교 `== != < <= > >=`, 논리 `and/or/not` 또는 한국어 별칭.
+- 연산: `+ - * / %`, 비교 `== != < <= > >=`, 논리 `ウルウル/ヤハヤハ/イヤハ` (구형 `and/or/not`도 지원).
 - 리스트: `[1, 2, 3]`, 접근: `items[0]`; 문자열도 인덱싱 지원.
 - 조건: `하아 x > 3 { 우라 "큼" } 후웅 { 우라 "작음" }`.
-- 반복: `푸루루루 x < 5 { x = x + 1 }`, `츠츠우라우라 x 안에 [1,2,3] { 우라 x }`.
+- 반복: `푸루루루 x < 5 { x = x + 1 }`, `츠츠우라우라 x 우라우라 [1,2,3] { 우라 x }`.
 - 함수: `우라라야하 add(a,b) { 우라라라 a+b }` → `add(1,2)`.
 - 내장 함수: `str(x)`, `int(x)`, `float(x)`, `len(x)`, `range(n)` / `range(start, stop[, step])`, `input(prompt)`.
 - 주석: `# ...` 또는 `// ...`; 세미콜론 선택 가능.
@@ -118,7 +123,7 @@ Windows에서는 환경에 따라 `python` 대신 `py`를 사용하세요.
 
 ```usagi
 # examples/imports.usagi
-インポート "modules/math.usagi" として 数学
+ハイ "modules/math.usagi" ウララ 数学
 ウラ 数学.square(4)
 우라 数学.pi
 ```
@@ -156,12 +161,12 @@ python usagilang.py examples/imports.usagi
 ウラ counter.next()
 ```
 
-**예외 처리:**
+**예외 처리 (v0.3):**
 
 ```usagi
-시도 {
+푸룻푸랏 {
     던지기 "야하!"
-} 잡기 err {
+} 우깃 err {
     우라 err
 }
 ```
@@ -176,7 +181,7 @@ usagi pkg verify
 usagi pkg remove helpers
 ```
 
-코드에서는 `import "pkg:helpers" as helpers`로 가져옵니다. 패키지 관리자는 **실험적 로컬 단일 파일 방식**이며 외부 레지스트리·버전 해결·온라인 설치는 지원하지 않습니다.
+코드에서는 `ハイ "pkg:helpers" ウララ helpers`로 가져옵니다. 패키지 관리자는 **실험적 로컬 단일 파일 방식**이며 외부 레지스트리·버전 해결·온라인 설치는 지원하지 않습니다.
 
 **VS Code:** [소스 확장](vscode/usagilang) 제공. 구문 강조, 스니펫, 키워드 추천, Run/Check 명령. 아직 Marketplace에는 게시되지 않았습니다.
 
